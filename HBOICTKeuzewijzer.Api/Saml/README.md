@@ -1,0 +1,1 @@
+﻿Hi, in here needs to be placed the saml metadata file. This is not comitted since I am not sure if it matters. Better safe than sorry I would say. Ask Jarne if you need it. 
