@@ -1,7 +1,7 @@
 ﻿using HBOICTKeuzewijzer.Api.DAL;
-using HBOICTKeuzewijzer.Api.DAL.Entities;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using HBOICTKeuzewijzer.Api.Models;
 
 namespace HBOICTKeuzewijzer.Api.Services
 {
@@ -23,11 +23,23 @@ namespace HBOICTKeuzewijzer.Api.Services
 
             if (user == null)
             {
+                var roleClaim = principal.FindFirst("http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value;
+
+                var roleEnum = roleClaim switch
+                {
+                    "Student" => Role.Student,
+                    "SLB" => Role.SLB,
+                    "ModuleAdmin" => Role.ModuleAdmin,
+                    "SystemAdmin" => Role.SystemAdmin,
+                    _ => Role.User
+                };
+
                 user = new ApplicationUser
                 {
                     ExternalId = externalId,
                     Email = email,
-                    DisplayName = displayName
+                    DisplayName = displayName,
+                    Role = roleEnum
                 };
 
                 appDbContext.ApplicationUsers.Add(user);

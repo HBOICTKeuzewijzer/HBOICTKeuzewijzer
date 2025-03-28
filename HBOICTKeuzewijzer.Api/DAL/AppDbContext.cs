@@ -1,4 +1,4 @@
-﻿using HBOICTKeuzewijzer.Api.DAL.Entities;
+﻿using HBOICTKeuzewijzer.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace HBOICTKeuzewijzer.Api.DAL

@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using HBOICTKeuzewijzer.Api.DAL;
 using Microsoft.EntityFrameworkCore;
-using HBOICTKeuzewijzer.Api.DAL.Entities;
 using HBOICTKeuzewijzer.Api.Services;
 
 namespace HBOICTKeuzewijzer.Api.Controllers
