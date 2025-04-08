@@ -20,6 +20,11 @@ namespace HBOICTKeuzewijzer.Api.DAL
                 .HasIndex(e => e.ExternalId)
                 .IsUnique()
                 .HasDatabaseName("IX_ApplicationUser_Unique_ExternalId");
+
+            modelBuilder.Entity<Message>()
+                .HasIndex(m => new { m.ChatId, m.SentAt })  
+                .IsUnique()
+                .HasDatabaseName("IX_Message_ChatId_SentAt");
         }
     }
 }
