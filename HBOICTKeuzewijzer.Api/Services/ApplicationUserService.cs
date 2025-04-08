@@ -38,8 +38,8 @@ namespace HBOICTKeuzewijzer.Api.Services
                 {
                     ExternalId = externalId,
                     Email = email,
-                    DisplayName = displayName,
-                    Role = roleEnum
+                    DisplayName = displayName
+                    //Role = roleEnum
                 };
 
                 appDbContext.ApplicationUsers.Add(user);

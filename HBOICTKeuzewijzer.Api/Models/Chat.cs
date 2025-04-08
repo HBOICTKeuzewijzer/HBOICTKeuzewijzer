@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace HBOICTKeuzewijzer.Api.Models
 {
@@ -13,6 +14,7 @@ namespace HBOICTKeuzewijzer.Api.Models
         public Guid SlbApplicationUserId { get; set; }
 
         [ForeignKey(nameof(SlbApplicationUserId))]
+        [DeleteBehavior(DeleteBehavior.NoAction)] // Later aanpassen
         public ApplicationUser? SLB { get; set; }
 
         [Required]
@@ -20,6 +22,7 @@ namespace HBOICTKeuzewijzer.Api.Models
         public Guid StudentApplicationUserId { get; set; }
 
         [ForeignKey(nameof(StudentApplicationUserId))]
+        [DeleteBehavior(DeleteBehavior.Cascade)] // Later aanpassen
         public ApplicationUser? Student { get; set; }
         public ICollection<Message>? Messages { get; set; }
 
