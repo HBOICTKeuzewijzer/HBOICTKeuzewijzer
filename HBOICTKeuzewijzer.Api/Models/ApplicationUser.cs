@@ -5,22 +5,31 @@ namespace HBOICTKeuzewijzer.Api.Models
     public class ApplicationUser
     {
         [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         [Required]
         [StringLength(255)]
-        public string ExternalId { get; set; } = string.Empty;
+        public string ExternalId { get; set; } 
 
         [Required]
         [EmailAddress]
         [StringLength(255)]
-        public string Email { get; set; } = string.Empty;
+        public string? Email { get; set; } 
 
         [Required]
-        public Role Role { get; set; }
+        public Role? Role { get; set; }
 
         [Required]
         [StringLength(100)]
-        public string DisplayName { get; set; } = string.Empty;
+        public string DisplayName { get; set; } 
+
+        [Required]
+        [StringLength(10)]
+        public string Code { get; set; } 
+
+
+        public ICollection<StudyRoute>? StudyRoutes { get; set; }
+
+        public ICollection<ApplicationUserRole>? ApplicationUserRole { get; set; }
     }
 }
