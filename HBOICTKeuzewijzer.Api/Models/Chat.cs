@@ -13,14 +13,14 @@ namespace HBOICTKeuzewijzer.Api.Models
         public Guid SlbApplicationUserId { get; set; }
 
         [ForeignKey(nameof(SlbApplicationUserId))]
-        public ApplicationUser SLB { get; set; }
+        public ApplicationUser? SLB { get; set; }
 
         [Required]
         [ForeignKey("Student")]
         public Guid StudentApplicationUserId { get; set; }
 
         [ForeignKey(nameof(StudentApplicationUserId))]
-        public ApplicationUser Student { get; set; }
+        public ApplicationUser? Student { get; set; }
         public ICollection<Message>? Messages { get; set; }
 
 

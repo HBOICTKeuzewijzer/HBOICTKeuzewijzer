@@ -35,7 +35,7 @@ namespace HBOICTKeuzewijzer.Api.Models
         public Oer? Oer { get; set; }
 
         [Required]
-        public Guid? OerId { get; set; }
+        public Guid OerId { get; set; }
 
         public ICollection<Semester>? Semesters { get; set; }
     }
