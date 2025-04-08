@@ -6,6 +6,15 @@ namespace HBOICTKeuzewijzer.Api.DAL
     public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
     {
         public DbSet<ApplicationUser> ApplicationUsers { get; set; } = null!;
+        public DbSet<ApplicationUserRole> ApplicationUserRole { get; set; } = null!;
+        public DbSet<Category> Category { get; set; } = null!;
+        public DbSet<Chat> Chat { get; set; } = null!;
+        public DbSet<Message> Message { get; set; } = null!;
+        public DbSet<Module> Module { get; set; } = null!;
+        public DbSet<Oer> Oer { get; set; } = null!;
+        public DbSet<Semester> Semester { get; set; } = null!;
+        public DbSet<StudyRoute> StudyRoute { get; set; } = null!;
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
