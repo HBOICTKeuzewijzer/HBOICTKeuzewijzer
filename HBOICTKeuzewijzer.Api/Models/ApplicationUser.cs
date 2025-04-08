@@ -16,7 +16,6 @@ namespace HBOICTKeuzewijzer.Api.Models
         [StringLength(255)]
         public string? Email { get; set; }
 
-
         [Required]
         [StringLength(100)]
         public string DisplayName { get; set; }
@@ -24,8 +23,6 @@ namespace HBOICTKeuzewijzer.Api.Models
         [Required]
         [StringLength(10)]
         public string Code { get; set; }
-
-
         public ICollection<StudyRoute>? StudyRoutes { get; set; }
 
         public ICollection<ApplicationUserRole>? ApplicationUserRoles { get; set; }
