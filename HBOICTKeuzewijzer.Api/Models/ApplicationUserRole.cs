@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.CodeAnalysis;
 
 namespace HBOICTKeuzewijzer.Api.Models
 {
@@ -12,12 +11,9 @@ namespace HBOICTKeuzewijzer.Api.Models
         public Role Role { get; set; }
 
         [Required]
-        public Guid ApplicationUserId { get; set; } // foreign key
+        public Guid ApplicationUserId { get; set; } 
+        public ApplicationUser? ApplicationUsers { get; set; } 
 
-
-
-        public ApplicationUser applicationUser { get; set; } // navigation property
-        
 
 
     }
