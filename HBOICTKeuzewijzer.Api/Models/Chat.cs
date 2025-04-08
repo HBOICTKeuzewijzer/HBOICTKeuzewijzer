@@ -21,7 +21,7 @@ namespace HBOICTKeuzewijzer.Api.Models
 
         [ForeignKey(nameof(StudentApplicationUserId))]
         public ApplicationUser Student { get; set; }
-        public ICollection<Message> messages { get; set; }
+        public ICollection<Message>? Messages { get; set; }
 
 
     }
