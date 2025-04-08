@@ -12,8 +12,8 @@ namespace HBOICTKeuzewijzer.Api.Models
 
             [Required]
             [MaxLength(5)]
-            public string AcademicYear { get; set; } = string.Empty;  
+            public string? AcademicYear { get; set; }  
 
-            public ICollection<Module> Modules { get; set; }
+            public ICollection<Module>? Modules { get; set; }
         }
     }

@@ -9,21 +9,21 @@ namespace HBOICTKeuzewijzer.Api.Models
 
         [Required]
         [StringLength(255)]
-        public string ExternalId { get; set; } 
+        public string ExternalId { get; set; }
 
         [Required]
         [EmailAddress]
         [StringLength(255)]
-        public string? Email { get; set; } 
+        public string? Email { get; set; }
 
 
         [Required]
         [StringLength(100)]
-        public string DisplayName { get; set; } 
+        public string DisplayName { get; set; }
 
         [Required]
         [StringLength(10)]
-        public string Code { get; set; } 
+        public string Code { get; set; }
 
 
         public ICollection<StudyRoute>? StudyRoutes { get; set; }

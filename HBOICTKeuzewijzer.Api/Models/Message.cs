@@ -15,7 +15,7 @@ namespace HBOICTKeuzewijzer.Api.Models
         public DateTime SentAt { get; set; }
 
         [ForeignKey(nameof(ChatId))]
-        public Chat Chat { get; set; }
+        public Chat? Chat { get; set; }
 
         [Required]
         public Guid ChatId { get; set; }

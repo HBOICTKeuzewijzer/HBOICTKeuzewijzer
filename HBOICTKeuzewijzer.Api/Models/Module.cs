@@ -32,10 +32,11 @@ namespace HBOICTKeuzewijzer.Api.Models
         public Guid? CategoryId { get; set; }
 
         [ForeignKey(nameof(OerId))]
-        public Oer Oer { get; set; }
-        [Required]
-        public Guid OerId { get; set; }
+        public Oer? Oer { get; set; }
 
-        public ICollection<Semester> Semesters { get; set; }
+        [Required]
+        public Guid? OerId { get; set; }
+
+        public ICollection<Semester>? Semesters { get; set; }
     }
 }

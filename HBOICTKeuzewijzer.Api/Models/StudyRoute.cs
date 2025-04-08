@@ -16,8 +16,8 @@ namespace HBOICTKeuzewijzer.Api.Models
         public Guid ApplicationUserId { get; set; }
 
         [ForeignKey(nameof(ApplicationUserId))]
-        public ApplicationUser ApplicationUser { get; set; }
+        public ApplicationUser? ApplicationUser { get; set; }
 
-        public ICollection<Semester> Semesters { get; set; }
+        public ICollection<Semester>? Semesters { get; set; }
     }
 }
