@@ -16,8 +16,6 @@ namespace HBOICTKeuzewijzer.Api.Models
         [StringLength(255)]
         public string? Email { get; set; } 
 
-        [Required]
-        public Role? Role { get; set; }
 
         [Required]
         [StringLength(100)]
@@ -30,6 +28,6 @@ namespace HBOICTKeuzewijzer.Api.Models
 
         public ICollection<StudyRoute>? StudyRoutes { get; set; }
 
-        public ICollection<ApplicationUserRole>? ApplicationUserRole { get; set; }
+        public ICollection<ApplicationUserRole>? ApplicationUserRoles { get; set; }
     }
 }
