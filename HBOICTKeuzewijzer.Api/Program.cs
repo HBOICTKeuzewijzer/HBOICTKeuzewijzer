@@ -1,5 +1,6 @@
 using HBOICTKeuzewijzer.Api.DAL;
 using HBOICTKeuzewijzer.Api.Middleware;
+using HBOICTKeuzewijzer.Api.Repositories;
 using HBOICTKeuzewijzer.Api.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -70,6 +71,8 @@ namespace HBOICTKeuzewijzer.Api
                 options.UseSqlServer(config.GetConnectionString("Default")));
 
             services.AddScoped<ApplicationUserService>();
+            services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+
 
             services.AddAuthorization();
             services.AddSingleton<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();

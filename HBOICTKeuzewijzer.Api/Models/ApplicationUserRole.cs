@@ -14,7 +14,5 @@ namespace HBOICTKeuzewijzer.Api.Models
         public Guid ApplicationUserId { get; set; } 
         public ApplicationUser? ApplicationUsers { get; set; } 
 
-
-
     }
 }
