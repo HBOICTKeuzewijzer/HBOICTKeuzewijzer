@@ -1,5 +1,6 @@
 ﻿using HBOICTKeuzewijzer.Api.DAL;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace HBOICTKeuzewijzer.Api.Repositories
 {
@@ -52,6 +53,18 @@ namespace HBOICTKeuzewijzer.Api.Repositories
         public IQueryable<T> Queryable()
         {
             return _dbSet.AsQueryable();
+        }
+
+        public async Task<IEnumerable<T>> GetAllIncludingAsync(params Expression<Func<T, object>>[] includes)
+        {
+            IQueryable<T> query = _dbSet;
+
+            foreach (var include in includes)
+            {
+                query = query.Include(include);
+            }
+
+            return await query.ToListAsync();
         }
     }
 }

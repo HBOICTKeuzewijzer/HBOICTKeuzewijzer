@@ -1,4 +1,6 @@
-﻿namespace HBOICTKeuzewijzer.Api.Repositories
+﻿using System.Linq.Expressions;
+
+namespace HBOICTKeuzewijzer.Api.Repositories
 {
     public interface IRepository<T> where T : class
     {
@@ -9,6 +11,7 @@
         Task DeleteAsync (Guid id);
         Task<bool> ExistsAsync(Guid id);
         IQueryable<T> Queryable();
+        Task<IEnumerable<T>> GetAllIncludingAsync(params Expression<Func<T, object>>[] includes);
 
     }
 }
