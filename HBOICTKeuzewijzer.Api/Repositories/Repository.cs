@@ -73,7 +73,7 @@ namespace HBOICTKeuzewijzer.Api.Repositories
         {
             IQueryable<T> query = _dbSet;
 
-            //includes
+            //includes, hierdoor zorg ik ervoor dat alleen de desbetreffende dingen worden meegenomen
             foreach (var include in includes)
             {
                 query = query.Include(include);
@@ -113,7 +113,8 @@ namespace HBOICTKeuzewijzer.Api.Repositories
                     query = query.Provider.CreateQuery<T>(resultExpression);
                 }
             }
-            // Count before pagination
+
+            // Count voordat de paginering gebeurt (wil natuurlijk bepalen hoeveel resultaten per pagina)
             var totalCount = await query.CountAsync();
 
             // Pagination

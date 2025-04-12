@@ -39,14 +39,14 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Module>> GetModule(Guid id)
         {
-            var @module = await _context.Modules.FindAsync(id);
+            var module = await _context.Modules.FindAsync(id);
 
-            if (@module == null)
+            if (module == null)
             {
                 return NotFound();
             }
 
-            return @module;
+            return module;
         }
 
         // PUT: api/Module/5
