@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using HBOICTKeuzewijzer.Api.Models;
 
 namespace HBOICTKeuzewijzer.Api.Repositories
 {
@@ -13,5 +14,8 @@ namespace HBOICTKeuzewijzer.Api.Repositories
         IQueryable<T> Queryable();
         Task<IEnumerable<T>> GetAllIncludingAsync(params Expression<Func<T, object>>[] includes);
 
+        Task<PaginatedResult<T>> GetPaginatedAsync(
+            ModuleRequestQuery request,
+            params Expression<Func<T, object>>[] includes);
     }
 }

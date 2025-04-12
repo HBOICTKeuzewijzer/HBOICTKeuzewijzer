@@ -1,15 +1,17 @@
-﻿using HBOICTKeuzewijzer.Api.Models;
+﻿using HBOICTKeuzewijzer.Api.DAL;
+using HBOICTKeuzewijzer.Api.Models;
 using HBOICTKeuzewijzer.Api.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace HBOICTKeuzewijzer.Api.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class ModuleController : ControllerBase
     {
         private readonly IRepository<Module> _moduleRepo;
+        private readonly AppDbContext _context;
 
         public ModuleController(IRepository<Module> moduleRepo)
         {
@@ -18,13 +20,19 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 
         // GET: api/Module
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Module>>> GetModules()
+        public async Task<ActionResult<PaginatedResult<Module>>> GetModules(
+            [FromQuery] ModuleRequestQuery request)
         {
-            var module = await _moduleRepo.Queryable()
-                .Include(m => m.Category)
-                .ToListAsync();
-            
-            return Ok (module);   
+            var result = await _moduleRepo.GetPaginatedAsync(request, m => m.Category);
+            return Ok(result);
+        }
+
+        [HttpGet("count")]
+        public async Task<ActionResult<int>> GetCount([FromQuery] string? filter = null)
+        {
+            var request = new ModuleRequestQuery { Filter = filter };
+            var result = await _moduleRepo.GetPaginatedAsync(request);
+            return Ok(result.TotalCount);
         }
 
         // GET: api/Module/5
@@ -42,66 +50,66 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         }
 
         // PUT: api/Module/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutModule(Guid id, Module @module)
+        public async Task<IActionResult> PutModule(Guid id, Module module)
         {
-            if (id != @module.Id)
+            if (id != module.Id)
             {
-                return BadRequest();
+                return BadRequest("Id en url komt niet overeen met de module ID");
             }
 
-            _context.Entry(@module).State = EntityState.Modified;
+            if (!await _moduleRepo.ExistsAsync(id))
+            {
+                return NotFound();
+            }
 
             try
             {
-                await _context.SaveChangesAsync();
+                await _moduleRepo.UpdateAsync(module);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!ModuleExists(id))
+                if (!await _moduleRepo.ExistsAsync(id))
                 {
                     return NotFound();
                 }
-                else
-                {
-                    throw;
-                }
+
+                throw;
             }
 
             return NoContent();
         }
 
         // POST: api/Module
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Module>> PostModule(Module @module)
-        {
-            _context.Modules.Add(@module);
-            await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetModule", new { id = @module.Id }, @module);
+        [HttpPost]
+        public async Task<ActionResult<Module>> PostModule(Module module)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            await _moduleRepo.AddAsync(module);
+
+            return CreatedAtAction(nameof(GetModule), new { id = module.Id }, module);
         }
 
         // DELETE: api/Module/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteModule(Guid id)
         {
-            var @module = await _context.Modules.FindAsync(id);
-            if (@module == null)
+            var module = await _moduleRepo.GetByIdAsync(id);
+            if (module == null)
             {
                 return NotFound();
             }
 
-            _context.Modules.Remove(@module);
-            await _context.SaveChangesAsync();
+            await _moduleRepo.DeleteAsync(id);
 
             return NoContent();
         }
 
-        private bool ModuleExists(Guid id)
-        {
-            return _context.Modules.Any(e => e.Id == id);
-        }
     }
 }

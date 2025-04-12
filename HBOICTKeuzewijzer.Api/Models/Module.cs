@@ -16,11 +16,13 @@ namespace HBOICTKeuzewijzer.Api.Models
         [Required]
         public string Code { get; set; } = string.Empty;
 
+        [MaxLength(200)]
         [Column(TypeName = "text")]
         public string? Description { get; set; }
 
+        [MaxLength(200)]
         [Required]
-        public string PrerequisiteJson { get; set; }
+        public string? PrerequisiteJson { get; set; }
 
         [Required]
         public int ECs { get; set; }
