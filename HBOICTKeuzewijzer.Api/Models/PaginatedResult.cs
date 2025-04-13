@@ -2,7 +2,7 @@
 {
 
     /// <summary>
-    /// Gepagineerd resultaat voor de API-responses. In wens vervulling voor Jarne ;p
+    /// Paginated result for API responses. In wish fulfillment for Jarne ;p
     /// </summary>
     public class PaginatedResult<T>
     {
