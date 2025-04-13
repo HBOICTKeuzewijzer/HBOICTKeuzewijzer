@@ -1,6 +1,6 @@
 ﻿namespace HBOICTKeuzewijzer.Api.Models
 {
-    public class ModuleRequestQuery
+    public class GetAllRequestQuery
     {
         public string? Filter { get; set; }
         public string? SortColumn { get; set; }

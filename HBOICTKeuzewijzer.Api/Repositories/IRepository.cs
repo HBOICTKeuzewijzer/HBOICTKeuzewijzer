@@ -15,7 +15,7 @@ namespace HBOICTKeuzewijzer.Api.Repositories
         Task<IEnumerable<T>> GetAllIncludingAsync(params Expression<Func<T, object>>[] includes);
 
         Task<PaginatedResult<T>> GetPaginatedAsync(
-            ModuleRequestQuery request,
+            GetAllRequestQuery request,
             params Expression<Func<T, object>>[] includes);
     }
 }
