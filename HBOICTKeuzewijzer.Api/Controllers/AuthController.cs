@@ -1,11 +1,7 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿using HBOICTKeuzewijzer.Api.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using HBOICTKeuzewijzer.Api.DAL;
-using Microsoft.EntityFrameworkCore;
-using HBOICTKeuzewijzer.Api.Services;
 
 namespace HBOICTKeuzewijzer.Api.Controllers
 {
