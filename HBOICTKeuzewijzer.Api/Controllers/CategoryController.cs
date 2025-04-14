@@ -19,7 +19,6 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         public async Task<ActionResult<IEnumerable<Category>>> GetWithModules()
         {
             var category = await _categoryRepo.GetAllIncludingAsync(c => c.Modules);
-
             return Ok(category);
         }
 
@@ -70,7 +69,6 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             }
 
             await _categoryRepo.DeleteAsync(id);
-
             return NoContent();
         }
     }
