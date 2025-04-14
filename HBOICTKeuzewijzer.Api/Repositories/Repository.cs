@@ -37,7 +37,6 @@ namespace HBOICTKeuzewijzer.Api.Repositories
         {
             _dbSet.Attach(entity);
             _context.Entry(entity).State = EntityState.Modified;
-            
         }
 
         public async Task DeleteAsync(Guid id)
