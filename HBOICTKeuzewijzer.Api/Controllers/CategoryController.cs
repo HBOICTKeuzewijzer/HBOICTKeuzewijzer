@@ -1,49 +1,43 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using HBOICTKeuzewijzer.Api.Models;
+using HBOICTKeuzewijzer.Api.Repositories;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using HBOICTKeuzewijzer.Api.DAL;
-using HBOICTKeuzewijzer.Api.Models;
 
 namespace HBOICTKeuzewijzer.Api.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class CategoryController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IRepository<Category> _categoryRepo;
 
-        public CategoryController(AppDbContext context)
+        public CategoryController(IRepository<Category> categoryRepo)
         {
-            _context = context;
+            _categoryRepo = categoryRepo;
         }
 
         // GET: api/Category
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Category>>> GetCategories()
+        public async Task<ActionResult<IEnumerable<Category>>> GetWithModules()
         {
-            return await _context.Categories.ToListAsync();
+            var category = await _categoryRepo.GetAllIncludingAsync(c => c.Modules);
+
+            return Ok(category);
         }
 
         // GET: api/Category/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Category>> GetCategory(Guid id)
         {
-            var category = await _context.Categories.FindAsync(id);
+            var category = await _categoryRepo.GetByIdAsync(id);
 
             if (category == null)
             {
                 return NotFound();
             }
 
-            return category;
+            return Ok(category);
         }
 
         // PUT: api/Category/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         public async Task<IActionResult> PutCategory(Guid id, Category category)
         {
@@ -52,34 +46,15 @@ namespace HBOICTKeuzewijzer.Api.Controllers
                 return BadRequest();
             }
 
-            _context.Entry(category).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CategoryExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
+            await _categoryRepo.UpdateAsync(category);
             return NoContent();
         }
 
         // POST: api/Category
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<Category>> PostCategory(Category category)
         {
-            _context.Categories.Add(category);
-            await _context.SaveChangesAsync();
+            await _categoryRepo.AddAsync(category);
 
             return CreatedAtAction("GetCategory", new { id = category.Id }, category);
         }
@@ -88,21 +63,15 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory(Guid id)
         {
-            var category = await _context.Categories.FindAsync(id);
+            var category = await _categoryRepo.GetByIdAsync(id);
             if (category == null)
             {
                 return NotFound();
             }
 
-            _context.Categories.Remove(category);
-            await _context.SaveChangesAsync();
+            await _categoryRepo.DeleteAsync(id);
 
             return NoContent();
-        }
-
-        private bool CategoryExists(Guid id)
-        {
-            return _context.Categories.Any(e => e.Id == id);
         }
     }
 }
