@@ -11,7 +11,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
     public class ModuleController : ControllerBase
     {
         private readonly IRepository<Module> _moduleRepo;
-        private readonly AppDbContext _context;
+        
 
         public ModuleController(IRepository<Module> moduleRepo)
         {
@@ -39,7 +39,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Module>> GetModule(Guid id)
         {
-            var module = await _context.Modules.FindAsync(id);
+            var module = await _moduleRepo.GetByIdAsync(id);
 
             if (module == null)
             {

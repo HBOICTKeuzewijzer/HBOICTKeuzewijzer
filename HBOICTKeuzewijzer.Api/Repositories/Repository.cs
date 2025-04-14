@@ -68,7 +68,7 @@ namespace HBOICTKeuzewijzer.Api.Repositories
             return await query.ToListAsync();
         }
 
-        public async Task<PaginatedResult<T>> GetPaginatedAsync(ModuleRequestQuery request,
+        public async Task<PaginatedResult<T>> GetPaginatedAsync(GetAllRequestQuery request,
             params Expression<Func<T, object>>[] includes)
         {
             IQueryable<T> query = _dbSet;
