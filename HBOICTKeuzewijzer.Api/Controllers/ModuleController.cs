@@ -1,6 +1,8 @@
-﻿using HBOICTKeuzewijzer.Api.DAL;
+﻿using HBOICTKeuzewijzer.Api.Attributes;
 using HBOICTKeuzewijzer.Api.Models;
 using HBOICTKeuzewijzer.Api.Repositories;
+using HBOICTKeuzewijzer.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,14 +10,17 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 {
     [Route("[controller]")]
     [ApiController]
+    [Authorize]
     public class ModuleController : ControllerBase
     {
         private readonly IRepository<Module> _moduleRepo;
+        private readonly ApplicationUserService _userService;
         
 
-        public ModuleController(IRepository<Module> moduleRepo)
+        public ModuleController(IRepository<Module> moduleRepo, ApplicationUserService userService)
         {
             _moduleRepo = moduleRepo;
+            _userService = userService;
         }
 
         // GET: api/Module
@@ -52,6 +57,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         // PUT: api/Module/5
 
         [HttpPut("{id}")]
+        [EnumAuthorize(Role.ModuleAdmin, Role.SystemAdmin)]
         public async Task<IActionResult> PutModule(Guid id, Module module)
         {
             if (id != module.Id)
@@ -62,6 +68,12 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             if (!await _moduleRepo.ExistsAsync(id))
             {
                 return NotFound();
+            }
+
+            var user = await _userService.GetOrCreateUserAsync(User);
+            if (user == null)
+            {
+                return Unauthorized();
             }
 
             try
@@ -82,13 +94,19 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         }
 
         // POST: api/Module
-
         [HttpPost]
+        [EnumAuthorize(Role.ModuleAdmin, Role.SystemAdmin)]
         public async Task<ActionResult<Module>> PostModule(Module module)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+
+            var user = await _userService.GetOrCreateUserAsync(User);
+            if (user == null)
+            {
+                return Unauthorized();
             }
 
             await _moduleRepo.AddAsync(module);
