@@ -10,12 +10,11 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 {
     [Route("[controller]")]
     [ApiController]
-    [Authorize]
     public class ModuleController : ControllerBase
     {
         private readonly IRepository<Module> _moduleRepo;
         private readonly ApplicationUserService _userService;
-        
+
 
         public ModuleController(IRepository<Module> moduleRepo, ApplicationUserService userService)
         {
@@ -55,7 +54,6 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         }
 
         // PUT: api/Module/5
-
         [HttpPut("{id}")]
         [EnumAuthorize(Role.ModuleAdmin, Role.SystemAdmin)]
         public async Task<IActionResult> PutModule(Guid id, Module module)
@@ -71,10 +69,6 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             }
 
             var user = await _userService.GetOrCreateUserAsync(User);
-            if (user == null)
-            {
-                return Unauthorized();
-            }
 
             try
             {
@@ -90,7 +84,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
                 throw;
             }
 
-            return NoContent();
+            return CreatedAtAction(nameof(GetModule), new { id = module.Id }, module);
         }
 
         // POST: api/Module
@@ -104,10 +98,6 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             }
 
             var user = await _userService.GetOrCreateUserAsync(User);
-            if (user == null)
-            {
-                return Unauthorized();
-            }
 
             await _moduleRepo.AddAsync(module);
 
@@ -116,6 +106,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 
         // DELETE: api/Module/5
         [HttpDelete("{id}")]
+        [EnumAuthorize(Role.SystemAdmin, Role.ModuleAdmin)]
         public async Task<IActionResult> DeleteModule(Guid id)
         {
             var module = await _moduleRepo.GetByIdAsync(id);
