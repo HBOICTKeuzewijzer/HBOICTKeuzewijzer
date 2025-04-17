@@ -1,6 +1,8 @@
-﻿using HBOICTKeuzewijzer.Api.DAL;
+﻿using HBOICTKeuzewijzer.Api.Attributes;
 using HBOICTKeuzewijzer.Api.Models;
 using HBOICTKeuzewijzer.Api.Repositories;
+using HBOICTKeuzewijzer.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,17 +13,19 @@ namespace HBOICTKeuzewijzer.Api.Controllers
     public class ModuleController : ControllerBase
     {
         private readonly IRepository<Module> _moduleRepo;
-        private readonly AppDbContext _context;
+        private readonly ApplicationUserService _userService;
 
-        public ModuleController(IRepository<Module> moduleRepo)
+
+        public ModuleController(IRepository<Module> moduleRepo, ApplicationUserService userService)
         {
             _moduleRepo = moduleRepo;
+            _userService = userService;
         }
 
         // GET: api/Module
         [HttpGet]
         public async Task<ActionResult<PaginatedResult<Module>>> GetModules(
-            [FromQuery] ModuleRequestQuery request)
+            [FromQuery] GetAllRequestQuery request)
         {
             var result = await _moduleRepo.GetPaginatedAsync(request, m => m.Category);
             return Ok(result);
@@ -30,7 +34,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         [HttpGet("count")]
         public async Task<ActionResult<int>> GetCount([FromQuery] string? filter = null)
         {
-            var request = new ModuleRequestQuery { Filter = filter };
+            var request = new GetAllRequestQuery { Filter = filter };
             var result = await _moduleRepo.GetPaginatedAsync(request);
             return Ok(result.TotalCount);
         }
@@ -39,7 +43,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Module>> GetModule(Guid id)
         {
-            var module = await _context.Modules.FindAsync(id);
+            var module = await _moduleRepo.GetByIdAsync(id);
 
             if (module == null)
             {
@@ -50,8 +54,8 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         }
 
         // PUT: api/Module/5
-
         [HttpPut("{id}")]
+        [EnumAuthorize(Role.ModuleAdmin, Role.SystemAdmin)]
         public async Task<IActionResult> PutModule(Guid id, Module module)
         {
             if (id != module.Id)
@@ -63,6 +67,8 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             {
                 return NotFound();
             }
+
+            var user = await _userService.GetOrCreateUserAsync(User);
 
             try
             {
@@ -78,18 +84,20 @@ namespace HBOICTKeuzewijzer.Api.Controllers
                 throw;
             }
 
-            return NoContent();
+            return CreatedAtAction(nameof(GetModule), new { id = module.Id }, module);
         }
 
         // POST: api/Module
-
         [HttpPost]
+        [EnumAuthorize(Role.ModuleAdmin, Role.SystemAdmin)]
         public async Task<ActionResult<Module>> PostModule(Module module)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
+
+            var user = await _userService.GetOrCreateUserAsync(User);
 
             await _moduleRepo.AddAsync(module);
 
@@ -98,6 +106,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 
         // DELETE: api/Module/5
         [HttpDelete("{id}")]
+        [EnumAuthorize(Role.SystemAdmin, Role.ModuleAdmin)]
         public async Task<IActionResult> DeleteModule(Guid id)
         {
             var module = await _moduleRepo.GetByIdAsync(id);
