@@ -125,9 +125,14 @@ namespace HBOICTKeuzewijzer.Api.Repositories
                 .Select(p => Expression.Property(parameter, p.Name));
 
             var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
+            if (containsMethod == null)
+            {
+                throw new InvalidOperationException("The 'Contains' method could not be found on type 'string'.");
+            }
+
             var filterExpression = properties
-                .Select(p => Expression.Call(p, containsMethod, Expression.Constant(filter)))
-                .Aggregate<Expression>((acc, next) => Expression.OrElse(acc, next));
+                    .Select(p => Expression.Call(p, containsMethod, Expression.Constant(filter)))
+                    .Aggregate<Expression>((acc, next) => Expression.OrElse(acc, next));
 
             return Expression.Lambda<Func<T, bool>>(filterExpression, parameter);
         }

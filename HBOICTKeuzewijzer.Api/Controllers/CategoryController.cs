@@ -1,79 +1,79 @@
-﻿using HBOICTKeuzewijzer.Api.Attributes;
-using HBOICTKeuzewijzer.Api.Models;
-using HBOICTKeuzewijzer.Api.Repositories;
-using Microsoft.AspNetCore.Mvc;
+﻿//using HBOICTKeuzewijzer.Api.Attributes;
+//using HBOICTKeuzewijzer.Api.Models;
+//using HBOICTKeuzewijzer.Api.Repositories;
+//using Microsoft.AspNetCore.Mvc;
 
-namespace HBOICTKeuzewijzer.Api.Controllers
-{
-    [Route("[controller]")]
-    [ApiController]
-    public class CategoryController : ControllerBase
-    {
-        private readonly IRepository<Category> _categoryRepo;
+//namespace HBOICTKeuzewijzer.Api.Controllers
+//{
+//    [Route("[controller]")]
+//    [ApiController]
+//    public class CategoryController : ControllerBase
+//    {
+//        private readonly IRepository<Category> _categoryRepo;
 
-        public CategoryController(IRepository<Category> categoryRepo)
-        {
-            _categoryRepo = categoryRepo;
-        }
+//        public CategoryController(IRepository<Category> categoryRepo)
+//        {
+//            _categoryRepo = categoryRepo;
+//        }
 
-        // GET: api/Category
-        public async Task<ActionResult<IEnumerable<Category>>> GetWithModules()
-        {
-            var categories = await _categoryRepo.GetAllIncludingAsync(c => c.Modules);
-            return Ok(categories);
-        }
+//        // GET: api/Category
+//        public async Task<ActionResult<IEnumerable<Category>>> GetWithModules()
+//        {
+//            var categories = await _categoryRepo.GetAllIncludingAsync(c => c.Modules);
+//            return Ok(categories);
+//        }
 
-        // GET: api/Category/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Category>> GetCategory(Guid id)
-        {
-            var category = await _categoryRepo.GetByIdAsync(id);
+//        // GET: api/Category/5
+//        [HttpGet("{id}")]
+//        public async Task<ActionResult<Category>> GetCategory(Guid id)
+//        {
+//            var category = await _categoryRepo.GetByIdAsync(id);
 
-            if (category == null)
-            {
-                return NotFound();
-            }
+//            if (category == null)
+//            {
+//                return NotFound();
+//            }
 
-            return Ok(category);
-        }
+//            return Ok(category);
+//        }
 
-        // PUT: api/Category/5
-        [HttpPut("{id}")]
-        [EnumAuthorize(Role.SystemAdmin, Role.ModuleAdmin)]
-        public async Task<IActionResult> PutCategory(Guid id, Category category)
-        {
-            if (id != category.Id)
-            {
-                return BadRequest();
-            }
+//        // PUT: api/Category/5
+//        [HttpPut("{id}")]
+//        [EnumAuthorize(Role.SystemAdmin, Role.ModuleAdmin)]
+//        public async Task<IActionResult> PutCategory(Guid id, Category category)
+//        {
+//            if (id != category.Id)
+//            {
+//                return BadRequest();
+//            }
 
-            await _categoryRepo.UpdateAsync(category);
-            return NoContent();
-        }
+//            await _categoryRepo.UpdateAsync(category);
+//            return NoContent();
+//        }
 
-        // POST: api/Category
-        [HttpPost]
-        [EnumAuthorize(Role.SystemAdmin, Role.ModuleAdmin)]
-        public async Task<ActionResult<Category>> PostCategory(Category category)
-        {
-            await _categoryRepo.AddAsync(category);
+//        // POST: api/Category
+//        [HttpPost]
+//        [EnumAuthorize(Role.SystemAdmin, Role.ModuleAdmin)]
+//        public async Task<ActionResult<Category>> PostCategory(Category category)
+//        {
+//            await _categoryRepo.AddAsync(category);
 
-            return CreatedAtAction("GetCategory", new { id = category.Id }, category);
-        }
+//            return CreatedAtAction("GetCategory", new { id = category.Id }, category);
+//        }
 
-        // DELETE: api/Category/5
-        [HttpDelete("{id}")]
-        [EnumAuthorize(Role.SystemAdmin, Role.ModuleAdmin)]
-        public async Task<IActionResult> DeleteCategory(Guid id)
-        {
-            var category = await _categoryRepo.GetByIdAsync(id);
-            if (category == null)
-            {
-                return NotFound();
-            }
+//        // DELETE: api/Category/5
+//        [HttpDelete("{id}")]
+//        [EnumAuthorize(Role.SystemAdmin, Role.ModuleAdmin)]
+//        public async Task<IActionResult> DeleteCategory(Guid id)
+//        {
+//            var category = await _categoryRepo.GetByIdAsync(id);
+//            if (category == null)
+//            {
+//                return NotFound();
+//            }
 
-            await _categoryRepo.DeleteAsync(id);
-            return NoContent();
-        }
-    }
-}
+//            await _categoryRepo.DeleteAsync(id);
+//            return NoContent();
+//        }
+//    }
+//}
