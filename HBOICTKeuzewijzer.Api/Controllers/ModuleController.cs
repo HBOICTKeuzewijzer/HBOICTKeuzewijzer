@@ -2,7 +2,6 @@
 using HBOICTKeuzewijzer.Api.Models;
 using HBOICTKeuzewijzer.Api.Repositories;
 using HBOICTKeuzewijzer.Api.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,7 +24,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         // GET: api/Module
         [HttpGet]
         public async Task<ActionResult<PaginatedResult<Module>>> GetModules(
-            [FromQuery] GetAllRequestQuery request)
+            [FromQuery] GetAllRequestQuery<Module> request)
         {
             var result = await _moduleRepo.GetPaginatedAsync(request, m => m.Category);
             return Ok(result);
@@ -34,7 +33,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         [HttpGet("count")]
         public async Task<ActionResult<int>> GetCount([FromQuery] string? filter = null)
         {
-            var request = new GetAllRequestQuery { Filter = filter };
+            var request = new GetAllRequestQuery<Module> { Filter = filter };
             var result = await _moduleRepo.GetPaginatedAsync(request);
             return Ok(result.TotalCount);
         }

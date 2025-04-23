@@ -50,6 +50,8 @@ namespace HBOICTKeuzewijzer.Api
                 });
 
                 options.SPOptions.ReturnUrl = new Uri(config["Saml:ReturnUrl"] ?? throw new Exception("Saml:ReturnUrl not set"));
+
+                options.SPOptions.PublicOrigin = new Uri(config["Saml:PublicOrigin"] ?? throw new Exception("Saml:PublicOrigin not set"));
             });
 
             // CORS
