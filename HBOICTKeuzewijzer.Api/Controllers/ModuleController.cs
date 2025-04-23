@@ -22,13 +22,13 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         }
 
         // GET: api/Module
-        [HttpGet]
-        public async Task<ActionResult<PaginatedResult<Module>>> GetModules(
-            [FromQuery] GetAllRequestQuery<Module> request)
-        {
-            var result = await _moduleRepo.GetPaginatedAsync(request, m => m.Category);
-            return Ok(result);
-        }
+        //[HttpGet]
+        //public async Task<ActionResult<PaginatedResult<Module>>> GetModules(
+        //    [FromQuery] GetAllRequestQuery<Module> request)
+        //{
+        //    var result = await _moduleRepo.GetPaginatedAsync(request, m => m.Category);
+        //    return Ok(result);
+        //}
 
         [HttpGet("count")]
         public async Task<ActionResult<int>> GetCount([FromQuery] string? filter = null)

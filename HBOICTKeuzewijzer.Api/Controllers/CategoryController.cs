@@ -17,6 +17,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         }
 
         // GET: api/Category
+        [HttpGet]
         public async Task<ActionResult<IEnumerable<Category>>> GetWithModules()
         {
             var categories = await _categoryRepo.GetAllIncludingAsync(c => c.Modules);
