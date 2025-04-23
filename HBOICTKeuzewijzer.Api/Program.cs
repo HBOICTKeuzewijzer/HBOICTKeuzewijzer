@@ -78,7 +78,11 @@ namespace HBOICTKeuzewijzer.Api
 
             services.AddAuthorization();
             services.AddSingleton<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
-            services.AddControllers();
+            services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+                });
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
         }
@@ -90,9 +94,7 @@ namespace HBOICTKeuzewijzer.Api
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
-
-
+            
             app.UseHttpsRedirection();
 
             app.UseAuthentication();
