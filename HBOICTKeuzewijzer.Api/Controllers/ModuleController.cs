@@ -55,7 +55,6 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         }
 
         // PUT: api/Module/5
-
         [HttpPut("{id}")]
         [EnumAuthorize(Role.ModuleAdmin, Role.SystemAdmin)]
         public async Task<IActionResult> PutModule(Guid id, Module module)
@@ -116,6 +115,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 
         // DELETE: api/Module/5
         [HttpDelete("{id}")]
+        [EnumAuthorize(Role.SystemAdmin, Role.ModuleAdmin)]
         public async Task<IActionResult> DeleteModule(Guid id)
         {
             var module = await _moduleRepo.GetByIdAsync(id);
@@ -128,6 +128,5 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 
             return NoContent();
         }
-
     }
 }

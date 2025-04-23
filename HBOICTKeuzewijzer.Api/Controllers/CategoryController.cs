@@ -1,6 +1,7 @@
 ﻿using HBOICTKeuzewijzer.Api.Models;
 using HBOICTKeuzewijzer.Api.Repositories;
 using Microsoft.AspNetCore.Mvc;
+using HBOICTKeuzewijzer.Api.Attributes;
 
 namespace HBOICTKeuzewijzer.Api.Controllers
 {
@@ -16,10 +17,11 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         }
 
         // GET: api/Category
+        [HttpGet]
         public async Task<ActionResult<IEnumerable<Category>>> GetWithModules()
         {
-            var category = await _categoryRepo.GetAllIncludingAsync(c => c.Modules);
-            return Ok(category);
+            var categories = await _categoryRepo.GetAllIncludingAsync(c => c.Modules);
+            return Ok(categories);
         }
 
         // GET: api/Category/5
@@ -38,6 +40,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 
         // PUT: api/Category/5
         [HttpPut("{id}")]
+        [EnumAuthorize(Role.SystemAdmin, Role.ModuleAdmin)]
         public async Task<IActionResult> PutCategory(Guid id, Category category)
         {
             if (id != category.Id)
@@ -51,6 +54,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 
         // POST: api/Category
         [HttpPost]
+        [EnumAuthorize(Role.SystemAdmin, Role.ModuleAdmin)]
         public async Task<ActionResult<Category>> PostCategory(Category category)
         {
             await _categoryRepo.AddAsync(category);
@@ -60,6 +64,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 
         // DELETE: api/Category/5
         [HttpDelete("{id}")]
+        [EnumAuthorize(Role.SystemAdmin, Role.ModuleAdmin)]
         public async Task<IActionResult> DeleteCategory(Guid id)
         {
             var category = await _categoryRepo.GetByIdAsync(id);
