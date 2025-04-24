@@ -5,7 +5,6 @@ using HBOICTKeuzewijzer.Api.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Sustainsys.Saml2;
 using Sustainsys.Saml2.AspNetCore2;
@@ -18,12 +17,6 @@ namespace HBOICTKeuzewijzer.Api
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
-            //builder.WebHost.ConfigureKestrel(serverOptions =>
-            //{
-            //    serverOptions.Limits.MinRequestBodyDataRate =
-            //        new MinDataRate(bytesPerSecond: 4096, gracePeriod: TimeSpan.FromSeconds(10));
-            //});
 
             ConfigureServices(builder.Services, builder.Configuration);
 
@@ -64,30 +57,35 @@ namespace HBOICTKeuzewijzer.Api
                 });
             });
 
-            // CORS
-            //services.AddCors(options =>
-            //{
-            //    options.AddDefaultPolicy(policy =>
-            //    {
-            //        var allowedOrigins = config.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
-            //        policy
-            //            .WithOrigins(allowedOrigins)
-            //            .AllowAnyHeader()
-            //            .AllowAnyMethod()
-            //            .AllowCredentials();
-            //    });
-            //});
 
-            services.AddCors(options =>
+            if (config.GetValue<bool>("Cors:AllowAny", false))
             {
-                options.AddDefaultPolicy(policy =>
+                services.AddCors(options =>
                 {
-                    policy
-                        .AllowAnyOrigin()    // <== allows all origins
-                        .AllowAnyMethod()    // <== allows GET, POST, etc.
-                        .AllowAnyHeader();   // <== allows all headers
+                    options.AddDefaultPolicy(policy =>
+                    {
+                        policy
+                            .AllowAnyOrigin()
+                            .AllowAnyMethod()
+                            .AllowAnyHeader();
+                    });
                 });
-            });
+            }
+            else
+            {
+                services.AddCors(options =>
+                {
+                    options.AddDefaultPolicy(policy =>
+                    {
+                        var allowedOrigins = config.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+                        policy
+                            .WithOrigins(allowedOrigins)
+                            .AllowAnyHeader()
+                            .AllowAnyMethod()
+                            .AllowCredentials();
+                    });
+                });
+            }
 
             // EF Core + Services
             services.AddDbContext<AppDbContext>(options =>
