@@ -91,8 +91,6 @@ namespace HBOICTKeuzewijzer.Api
                 app.UseSwaggerUI();
             }
 
-
-
             app.UseHttpsRedirection();
 
             app.UseAuthentication();

@@ -67,40 +67,56 @@ namespace HBOICTKeuzewijzer.Api.Repositories
             return await query.ToListAsync();
         }
 
-
-        public async Task<PaginatedResult<T>> GetPaginatedAsync(GetAllRequestQuery<T> request,
-        params Expression<Func<T, object>>[] includes)
+        public async Task<PaginatedResult<T>> GetPaginatedAsync(GetAllRequestQuery request,
+            params Expression<Func<T, object>>[] includes)
         {
-            request.SetSortExpression();
-
             IQueryable<T> query = _dbSet;
 
+            //includes, hierdoor zorg ik ervoor dat alleen de desbetreffende dingen worden meegenomen
             foreach (var include in includes)
             {
                 query = query.Include(include);
             }
 
+            //filtering
             if (!string.IsNullOrEmpty(request.Filter))
             {
-                var filterExpression = BuildFilterExpression(request.Filter);
-                query = query.Where(filterExpression);
+                query = query.Where(e =>
+                    EF.Functions.Like(e.GetType().GetProperty("Name").GetValue(e).ToString() ?? "", $"%{request.Filter}%") ||
+                    EF.Functions.Like(e.GetType().GetProperty("Description").GetValue(e).ToString() ?? "", $"%{request.Filter}%"));
             }
 
-            if (request.SortExpression != null)
+            //sortering
+            if (!string.IsNullOrEmpty(request.SortColumn))
             {
-                var methodName = request.SortDirection == Direction.Desc ? "OrderByDescending" : "OrderBy";
-                var resultExpression = Expression.Call(
-                    typeof(Queryable),
-                    methodName,
-                    new Type[] { typeof(T), request.SortExpression.ReturnType },
-                    query.Expression,
-                    Expression.Quote(request.SortExpression));
+                var propertyInfo = typeof(T).GetProperty(request.SortColumn,
+                    BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
 
-                query = query.Provider.CreateQuery<T>(resultExpression);
+                if (propertyInfo != null)
+                {
+                    var parameter = Expression.Parameter(typeof(T), "x");
+                    var property = Expression.Property(parameter, propertyInfo);
+                    var lambda = Expression.Lambda(property, parameter);
+
+                    var methodName = request.SortDirection?.ToLower() == "desc"
+                        ? "OrderByDescending"
+                        : "OrderBy";
+
+                    var resultExpression = Expression.Call(
+                        typeof(Queryable),
+                        methodName,
+                        new Type[] { typeof(T), propertyInfo.PropertyType },
+                        query.Expression,
+                        Expression.Quote(lambda));
+
+                    query = query.Provider.CreateQuery<T>(resultExpression);
+                }
             }
 
+            // Count voordat de paginering gebeurt (wil natuurlijk bepalen hoeveel resultaten per pagina)
             var totalCount = await query.CountAsync();
 
+            // Pagination
             if (request.Page.HasValue && request.PageSize.HasValue)
             {
                 query = query
@@ -115,26 +131,6 @@ namespace HBOICTKeuzewijzer.Api.Repositories
                 Page = request.Page ?? 1,
                 PageSize = request.PageSize ?? totalCount
             };
-        }
-
-        private Expression<Func<T, bool>> BuildFilterExpression(string filter)
-        {
-            var parameter = Expression.Parameter(typeof(T), "x");
-            var properties = typeof(T).GetProperties()
-                .Where(p => p.PropertyType == typeof(string))
-                .Select(p => Expression.Property(parameter, p.Name));
-
-            var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
-            if (containsMethod == null)
-            {
-                throw new InvalidOperationException("The 'Contains' method could not be found on type 'string'.");
-            }
-
-            var filterExpression = properties
-                    .Select(p => Expression.Call(p, containsMethod, Expression.Constant(filter)))
-                    .Aggregate<Expression>((acc, next) => Expression.OrElse(acc, next));
-
-            return Expression.Lambda<Func<T, bool>>(filterExpression, parameter);
         }
     }
 }

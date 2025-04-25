@@ -2,6 +2,7 @@
 using HBOICTKeuzewijzer.Api.Models;
 using HBOICTKeuzewijzer.Api.Repositories;
 using Microsoft.AspNetCore.Mvc;
+using HBOICTKeuzewijzer.Api.Attributes;
 
 namespace HBOICTKeuzewijzer.Api.Controllers
 {
@@ -17,6 +18,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         }
 
         // GET: api/Category
+        [HttpGet]
         public async Task<ActionResult<IEnumerable<Category>>> GetWithModules()
         {
             var categories = await _categoryRepo.GetAllIncludingAsync(c => c.Modules);
