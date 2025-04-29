@@ -31,7 +31,7 @@ namespace HBOICTKeuzewijzer.Api.Models
         public int Level { get; set; }
 
         [ForeignKey(nameof(CategoryId))]
-        [JsonIgnore]
+        
         public Category? Category { get; set; }
         public Guid? CategoryId { get; set; }
 

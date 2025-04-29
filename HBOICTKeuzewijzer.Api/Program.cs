@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Sustainsys.Saml2;
 using Sustainsys.Saml2.AspNetCore2;
 using Sustainsys.Saml2.Metadata;
+using System.Text.Json.Serialization;
 
 namespace HBOICTKeuzewijzer.Api
 {
@@ -78,7 +79,10 @@ namespace HBOICTKeuzewijzer.Api
 
             services.AddAuthorization();
             services.AddSingleton<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
-            services.AddControllers();
+            services.AddControllers().AddJsonOptions(opt =>
+            {
+                opt.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+            });
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
         }
