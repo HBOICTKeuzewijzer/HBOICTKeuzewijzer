@@ -5,7 +5,14 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HBOICTKeuzewijzer.Api.Controllers
 {
-    [Route("Chat/[controller]")]
+    /*
+    * I have chosen to seperate the Message logic from the chat logic.
+    * This is done to keep the chat controller small an seperate the logic.
+    *
+    * We kept the Message controller bundeld under the chat route as it is part of that entity
+    */
+
+    [Route("Chat/{chatId}/[controller]")]
     [ApiController]
     public class MessageController : ControllerBase
     {
@@ -19,27 +26,55 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<PaginatedResult<Message>>> List([FromQuery] GetAllRequestQuery request)
+        public async Task<ActionResult<PaginatedResult<Message>>> List(Guid chatId, [FromQuery] GetAllRequestQuery request)
         {
-            return Ok(await _messageRepository.GetPaginatedAsync(request));
+            // Get all the messages associated with the chat.
+            var result = await _messageRepository
+                .GetPaginatedAsync(request, m => (m as Message)!.ChatId == chatId);
+
+            return Ok(result);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Message>> GetById(Guid chatId, Guid id)
+        {
+            var message = await _messageRepository.GetByIdAsync(id);
+            if (message == null || message.ChatId != chatId)
+                return NotFound();
+
+            return Ok(message);
         }
 
         [HttpPost]
-        public async Task<ActionResult<PaginatedResult<Message>>> Create([FromQuery] GetAllRequestQuery request)
+        public async Task<ActionResult<Message>> Create(Guid chatId, [FromBody] Message message)
         {
-            return Ok(await _messageRepository.GetPaginatedAsync(request));
+            message.ChatId = chatId;
+            await _messageRepository.AddAsync(message);
+            return CreatedAtAction(nameof(GetById), new { chatId = chatId, id = message.Id }, message);
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<PaginatedResult<Message>>> Update([FromQuery] GetAllRequestQuery request)
+        public async Task<ActionResult> Update(Guid chatId, Guid id, [FromBody] Message updatedMessage)
         {
-            return Ok(await _messageRepository.GetPaginatedAsync(request));
+            var existing = await _messageRepository.GetByIdAsync(id);
+            if (existing == null || existing.ChatId != chatId)
+                return NotFound();
+
+            updatedMessage.Id = id;
+            updatedMessage.ChatId = chatId;
+            await _messageRepository.UpdateAsync(updatedMessage);
+            return NoContent();
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult<PaginatedResult<Message>>> Delete([FromQuery] GetAllRequestQuery request)
+        public async Task<ActionResult> Delete(Guid chatId, Guid id)
         {
-            return Ok(await _messageRepository.GetPaginatedAsync(request));
+            var existing = await _messageRepository.GetByIdAsync(id);
+            if (existing == null || existing.ChatId != chatId)
+                return NotFound();
+
+            await _messageRepository.DeleteAsync(id);
+            return NoContent();
         }
     }
 }
