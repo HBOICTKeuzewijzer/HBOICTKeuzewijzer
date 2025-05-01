@@ -22,12 +22,14 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         public async Task<ActionResult<PaginatedResult<Chat>>> List([FromQuery] GetAllRequestQuery request)
         {
             var result = await _chatRepository.GetPaginatedAsync(request);
+
             return Ok(result);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Chat>> Read(Guid id)
         {
+            // Check if the chat exists.
             var chat = await _chatRepository.GetByIdAsync(id);
             if (chat == null)
                 return NotFound();
@@ -39,31 +41,20 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         public async Task<ActionResult<Chat>> Create([FromBody] Chat chat)
         {
             await _chatRepository.AddAsync(chat);
+
             return CreatedAtAction(nameof(Read), new { id = chat.Id }, chat);
-        }
-
-        [HttpPut("{id}")]
-        public async Task<ActionResult> Update(Guid id, [FromBody] Chat updatedChat)
-        {
-            var existing = await _chatRepository.GetByIdAsync(id);
-            if (existing == null)
-                return NotFound();
-
-            updatedChat.Id = id;
-            await _chatRepository.UpdateAsync(updatedChat);
-            await (_chatRepository as Repository<Chat>)!._context.SaveChangesAsync();
-            return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(Guid id)
         {
+            // Check if the chat exists.
             var existing = await _chatRepository.GetByIdAsync(id);
             if (existing == null)
                 return NotFound();
 
             await _chatRepository.DeleteAsync(id);
-            await (_chatRepository as Repository<Chat>)!._context.SaveChangesAsync();
+            
             return NoContent();
         }
     }
