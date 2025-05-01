@@ -55,7 +55,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             message.ChatId = chatId;
             await _messageRepository.AddAsync(message);
 
-            return CreatedAtAction(nameof(GetById), new { chatId = chatId, id = message.Id }, message);
+            return CreatedAtAction(nameof(Create), new { chatId, id = message.Id }, message);
         }
 
         [HttpPut("{id}")]
