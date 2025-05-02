@@ -2,6 +2,7 @@
 using HBOICTKeuzewijzer.Api.Models;
 using HBOICTKeuzewijzer.Api.Repositories;
 using Microsoft.AspNetCore.Mvc;
+using HBOICTKeuzewijzer.Api.Attributes;
 
 namespace HBOICTKeuzewijzer.Api.Controllers
 {
