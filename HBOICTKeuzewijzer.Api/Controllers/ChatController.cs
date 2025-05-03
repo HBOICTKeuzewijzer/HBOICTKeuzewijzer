@@ -18,10 +18,28 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             _userService = userService;
         }
 
+        private async Task<(ApplicationUser user, Chat? chat)> GetAuthorizedChat(Guid chatId)
+        {
+            var user = await _userService.GetOrCreateUserAsync(User);
+            var chat = await _chatRepository.GetByIdAsync(chatId);
+
+            if (chat == null ||
+                (chat.SlbApplicationUserId != user.Id && chat.StudentApplicationUserId != user.Id))
+            {
+                return (user, null);
+            }
+
+            return (user, chat);
+        }
+
         [HttpGet]
         public async Task<ActionResult<PaginatedResult<Chat>>> List([FromQuery] GetAllRequestQuery request)
         {
-            var result = await _chatRepository.GetPaginatedAsync(request);
+            var user = await _userService.GetOrCreateUserAsync(User);
+            var result = await _chatRepository.GetPaginatedAsync(request, c => 
+                (c as Chat)!.SlbApplicationUserId != user.Id
+                || (c as Chat)!.StudentApplicationUserId != user.Id
+            );
 
             return Ok(result);
         }
@@ -29,10 +47,8 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Chat>> Read(Guid id)
         {
-            // Check if the chat exists.
-            var chat = await _chatRepository.GetByIdAsync(id);
-            if (chat == null)
-                return NotFound();
+            var (user, chat) = await GetAuthorizedChat(id);
+            if (chat == null) return NotFound();
 
             return Ok(chat);
         }
@@ -48,14 +64,12 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(Guid id)
         {
-            // Check if the chat exists.
-            var existing = await _chatRepository.GetByIdAsync(id);
-            if (existing == null)
-                return NotFound();
+            var (user, chat) = await GetAuthorizedChat(id);
+            if (chat == null) return NotFound();
 
             await _chatRepository.DeleteAsync(id);
-            
             return NoContent();
         }
+
     }
 }

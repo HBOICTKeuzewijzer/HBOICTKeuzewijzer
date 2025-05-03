@@ -18,17 +18,40 @@ namespace HBOICTKeuzewijzer.Api.Controllers
     public class MessageController : ControllerBase
     {
         private readonly IRepository<Message> _messageRepository;
+        private readonly IRepository<Chat> _chatRepository;
         private readonly ApplicationUserService _userService;
 
-        public MessageController(IRepository<Message> messageRepository, ApplicationUserService userService)
+        public MessageController(
+            IRepository<Message> messageRepository,
+            IRepository<Chat> chatRepository,
+            ApplicationUserService userService)
         {
             _messageRepository = messageRepository;
+            _chatRepository = chatRepository;
             _userService = userService;
+        }
+
+        private async Task<Chat?> GetAuthorizedChat(Guid chatId)
+        {
+            var user = await _userService.GetOrCreateUserAsync(User);
+            var chat = await _chatRepository.GetByIdAsync(chatId);
+
+            if (chat == null ||
+                (chat.SlbApplicationUserId != user.Id && chat.StudentApplicationUserId != user.Id))
+            {
+                return null;
+            }
+
+            return chat;
         }
 
         [HttpGet]
         public async Task<ActionResult<PaginatedResult<Message>>> List(Guid chatId, [FromQuery] GetAllRequestQuery request)
         {
+            // Ensure the user is allowed to view the messages
+            var chat = await GetAuthorizedChat(chatId);
+            if (chat == null) return NotFound();
+
             // Get all the messages associated with the chat.
             var result = await _messageRepository
                 .GetPaginatedAsync(request, m => (m as Message)!.ChatId == chatId);
@@ -39,6 +62,10 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Message>> Read(Guid chatId, Guid id)
         {
+            // Ensure the user is allowed to view the messages
+            var chat = await GetAuthorizedChat(chatId);
+            if (chat == null) return NotFound();
+
             var message = await _messageRepository.GetByIdAsync(id);
 
             // Check if the message exists and is associated with the chat.
@@ -51,6 +78,10 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<Message>> Create(Guid chatId, [FromBody] Message message)
         {
+            // Ensure the user is allowed to view the messages
+            var chat = await GetAuthorizedChat(chatId);
+            if (chat == null) return NotFound();
+
             // Set the current chatID
             message.ChatId = chatId;
             await _messageRepository.AddAsync(message);
@@ -61,6 +92,10 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         [HttpPut("{id}")]
         public async Task<ActionResult> Update(Guid chatId, Guid id, [FromBody] Message updatedMessage)
         {
+            // Ensure the user is allowed to view the messages
+            var chat = await GetAuthorizedChat(chatId);
+            if (chat == null) return NotFound();
+
             // Check if the message exists and is associated with the chat.
             var existing = await _messageRepository.GetByIdAsync(id);
             if (existing == null || existing.ChatId != chatId)
@@ -78,6 +113,10 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(Guid chatId, Guid id)
         {
+            // Ensure the user is allowed to view the messages
+            var chat = await GetAuthorizedChat(chatId);
+            if (chat == null) return NotFound();
+
             // Check if the message exists and is associated with the chat.
             var existing = await _messageRepository.GetByIdAsync(id);
             if (existing == null || existing.ChatId != chatId)
