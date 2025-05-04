@@ -6,7 +6,7 @@ using HBOICTKeuzewijzer.Api.Repositories;
 using HBOICTKeuzewijzer.Api.Services;
 using System.Security.Claims;
 
-namespace xUnitTest
+namespace HBOICTKeuzewijzer.tests.Controllers
 {
     public class ModuleControllerTests
     {
