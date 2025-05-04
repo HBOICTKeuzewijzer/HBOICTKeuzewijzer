@@ -4,6 +4,7 @@ using HBOICTKeuzewijzer.Api.Repositories;
 using HBOICTKeuzewijzer.Api.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Sustainsys.Saml2;
 using Sustainsys.Saml2.AspNetCore2;
@@ -39,6 +40,12 @@ namespace HBOICTKeuzewijzer.Api
             {
                 options.SPOptions.EntityId = new EntityId(config["Saml:SPEntityId"] ?? throw new Exception("Saml:SPEntityId not set"));
 
+                options.SPOptions.ReturnUrl = new Uri(config["Saml:ReturnUrl"] ?? throw new Exception("Saml:ReturnUrl not set"));
+
+                options.SPOptions.PublicOrigin = new Uri(config["Saml:PublicOrigin"] ?? throw new Exception("Saml:PublicOrigin not set"));
+
+                options.SPOptions.ModulePath = "/saml2";
+
                 var metadataRelativePath = config["Saml:IdpMetadata"] ?? throw new Exception("Saml:IdpMetadata not set");
                 var tenantId = config["AzureAd:TenantId"] ?? throw new Exception("AzureAd:TenantId not set");
                 var metadataPath = Path.Combine(AppContext.BaseDirectory, metadataRelativePath);
@@ -48,25 +55,37 @@ namespace HBOICTKeuzewijzer.Api
                     LoadMetadata = true,
                     MetadataLocation = metadataPath
                 });
-
-                options.SPOptions.ReturnUrl = new Uri(config["Saml:ReturnUrl"] ?? throw new Exception("Saml:ReturnUrl not set"));
-
-                options.SPOptions.PublicOrigin = new Uri(config["Saml:PublicOrigin"] ?? throw new Exception("Saml:PublicOrigin not set"));
             });
 
-            // CORS
-            services.AddCors(options =>
+
+            if (config.GetValue<bool>("Cors:AllowAny", false))
             {
-                options.AddDefaultPolicy(policy =>
+                services.AddCors(options =>
                 {
-                    var allowedOrigins = config.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
-                    policy
-                        .WithOrigins(allowedOrigins)
-                        .AllowAnyHeader()
-                        .AllowAnyMethod()
-                        .AllowCredentials();
+                    options.AddDefaultPolicy(policy =>
+                    {
+                        policy
+                            .AllowAnyOrigin()
+                            .AllowAnyMethod()
+                            .AllowAnyHeader();
+                    });
                 });
-            });
+            }
+            else
+            {
+                services.AddCors(options =>
+                {
+                    options.AddDefaultPolicy(policy =>
+                    {
+                        var allowedOrigins = config.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+                        policy
+                            .WithOrigins(allowedOrigins)
+                            .AllowAnyHeader()
+                            .AllowAnyMethod()
+                            .AllowCredentials();
+                    });
+                });
+            }
 
             // EF Core + Services
             services.AddDbContext<AppDbContext>(options =>
@@ -78,7 +97,11 @@ namespace HBOICTKeuzewijzer.Api
 
             services.AddAuthorization();
             services.AddSingleton<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
-            services.AddControllers();
+            services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+                });
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
         }
@@ -91,7 +114,49 @@ namespace HBOICTKeuzewijzer.Api
                 app.UseSwaggerUI();
             }
 
-            app.UseHttpsRedirection();
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor,
+                ForwardLimit = null,
+                RequireHeaderSymmetry = false
+            });
+
+            app.Use(async (context, next) =>
+            {
+                var scheme = context.Request.Scheme;
+                var xfp = context.Request.Headers["X-Forwarded-Proto"].FirstOrDefault();
+                var xff = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+
+                Console.WriteLine("==== Forwarded Header Debug ====");
+                Console.WriteLine($"Request.Scheme: {scheme}");
+                Console.WriteLine($"X-Forwarded-Proto: {xfp}");
+                Console.WriteLine($"X-Forwarded-For: {xff}");
+                Console.WriteLine("===============================");
+
+                await next();
+            });
+
+            app.Use(async (context, next) =>
+            {
+                Console.WriteLine($"[PRE-LOG] Path: {context.Request.Path}, Method: {context.Request.Method}");
+
+                if (context.Request.Path.StartsWithSegments("/saml2/Acs", StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine("==== SAML2 ACS endpoint hit ====");
+                    Console.WriteLine($"Method: {context.Request.Method}");
+                    Console.WriteLine($"Scheme: {context.Request.Scheme}");
+                    Console.WriteLine($"Content-Length: {context.Request.ContentLength}");
+                    Console.WriteLine($"Has Cookies: {context.Request.Cookies.Count > 0}");
+                    Console.WriteLine("Headers:");
+                    foreach (var header in context.Request.Headers)
+                    {
+                        Console.WriteLine($"  {header.Key}: {header.Value}");
+                    }
+                    Console.WriteLine("================================");
+                }
+
+                await next();
+            });
 
             app.UseAuthentication();
             app.UseAuthorization();

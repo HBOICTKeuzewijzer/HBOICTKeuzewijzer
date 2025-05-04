@@ -19,30 +19,46 @@ namespace HBOICTKeuzewijzer.Api.Services
                 throw new InvalidOperationException("Missing external user ID.");
 
             var user = await appDbContext.ApplicationUsers
+                .Include(u => u.ApplicationUserRoles)
                 .FirstOrDefaultAsync(u => u.ExternalId == externalId);
 
             if (user == null)
             {
-                var roleClaim = principal.FindFirst("http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value;
-
-                var roleEnum = roleClaim switch
-                {
-                    "Student" => Role.Student,
-                    "SLB" => Role.SLB,
-                    "ModuleAdmin" => Role.ModuleAdmin,
-                    "SystemAdmin" => Role.SystemAdmin,
-                    _ => Role.User
-                };
+                var roleClaims = principal
+                    .FindAll("http://schemas.microsoft.com/ws/2008/06/identity/claims/role")
+                    .Select(c => c.Value)
+                    .Select(role => role switch
+                    {
+                        "Student" => Role.Student,
+                        "SLB" => Role.SLB,
+                        "ModuleAdmin" => Role.ModuleAdmin,
+                        "SystemAdmin" => Role.SystemAdmin,
+                        _ => Role.User
+                    })
+                    .Distinct()
+                    .ToList();
 
                 user = new ApplicationUser
                 {
                     ExternalId = externalId,
                     Email = email,
-                    DisplayName = displayName
-                    //Role = roleEnum
+                    DisplayName = displayName,
+                    Code = "default"
                 };
 
                 appDbContext.ApplicationUsers.Add(user);
+
+                foreach (var roleClaim in roleClaims)
+                {
+                    ApplicationUserRole userRole = new()
+                    {
+                        Role = roleClaim,
+                        ApplicationUsers = user
+                    };
+
+                    appDbContext.ApplicationUserRoles.Add(userRole);
+                }
+               
                 await appDbContext.SaveChangesAsync();
             }
 
