@@ -23,17 +23,36 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 
         [HttpGet]
         [EnumAuthorize(Role.SLB)]
-        public async Task<ActionResult<IEnumerable<ApplicationUser>>> GetStudents()
+        public async Task<ActionResult<PaginatedResult<ApplicationUser>>> GetStudents(
+            [FromQuery] GetAllRequestQuery request)
         {
             var currentUser = await _userService.GetOrCreateUserAsync(User);
 
-            var students = await _slbRepo.Queryable()
+            var query = _slbRepo.Queryable()
                 .Include(s => s.StudentApplicationUser)
                 .Where(s => s.SlbApplicationUserId == currentUser.Id)
-                .Select(s => s.StudentApplicationUser)
-                .ToListAsync();
+                .Select(s => s.StudentApplicationUser);
 
-            return Ok(students);
+            var totalCount = await query.CountAsync();
+
+            if (request.Page.HasValue && request.PageSize.HasValue)
+            {
+                query = query
+                    .Skip((request.Page.Value - 1) * request.PageSize.Value)
+                    .Take(request.PageSize.Value);
+            }
+
+            var items = await query.ToListAsync();
+
+            var result = new PaginatedResult<ApplicationUser>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = request.Page ?? 1,
+                PageSize = request.PageSize ?? totalCount
+            };
+
+            return Ok(result);
         }
 
         [HttpPut("{slbId:guid}/{studentId:guid}")]
