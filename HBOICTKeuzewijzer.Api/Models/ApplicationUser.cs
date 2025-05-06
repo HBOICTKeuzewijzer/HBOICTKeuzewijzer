@@ -23,6 +23,10 @@ namespace HBOICTKeuzewijzer.Api.Models
         [Required]
         [StringLength(10)]
         public string Code { get; set; }
+
+        [MaxLength(5)]
+        public string Cohort { get; set; }
+
         public ICollection<StudyRoute>? StudyRoutes { get; set; }
 
         public ICollection<ApplicationUserRole>? ApplicationUserRoles { get; set; }
