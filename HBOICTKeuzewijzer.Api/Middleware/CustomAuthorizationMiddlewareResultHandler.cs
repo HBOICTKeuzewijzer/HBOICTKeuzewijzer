@@ -13,11 +13,14 @@ namespace HBOICTKeuzewijzer.Api.Middleware
             AuthorizationPolicy policy,
             PolicyAuthorizationResult authorizeResult)
         {
-            if (authorizeResult.Forbidden && context.User.Identity?.IsAuthenticated == true)
+            if (!authorizeResult.Succeeded)
             {
-                context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                await context.Response.WriteAsync("Forbidden");
-                return;
+                    context.Response.StatusCode = authorizeResult.Forbidden
+                        ? StatusCodes.Status403Forbidden
+                        : StatusCodes.Status401Unauthorized;
+
+                    await context.Response.WriteAsync(authorizeResult.Forbidden ? "Forbidden" : "Unauthorized");
+                    return;
             }
 
             await _defaultHandler.HandleAsync(next, context, policy, authorizeResult);
