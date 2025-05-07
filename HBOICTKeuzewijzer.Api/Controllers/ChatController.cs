@@ -2,6 +2,7 @@
 using HBOICTKeuzewijzer.Api.Repositories;
 using HBOICTKeuzewijzer.Api.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace HBOICTKeuzewijzer.Api.Controllers
 {
@@ -36,13 +37,29 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         public async Task<ActionResult<PaginatedResult<Chat>>> List([FromQuery] GetAllRequestQuery request)
         {
             var user = await _userService.GetOrCreateUserAsync(User);
-            var result = await _chatRepository.GetPaginatedAsync(request, c => 
-                (c as Chat)!.SlbApplicationUserId != user.Id
-                || (c as Chat)!.StudentApplicationUserId != user.Id
-            );
 
-            return Ok(result);
+            // Handmatig query opbouwen
+            var query = _chatRepository
+                .Query() // dit moet je toevoegen aan IRepository<T>
+                .Where(c => c.SlbApplicationUserId == user.Id || c.StudentApplicationUserId == user.Id)
+                .Include(c => c.Messages); // <-- mag hier wél veilig
+
+            // Paginate zelf
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .Skip((request.Page.GetValueOrDefault(1) - 1) * request.PageSize.GetValueOrDefault(10))
+                .Take(request.PageSize.GetValueOrDefault(10))
+                .ToListAsync();
+
+            return Ok(new PaginatedResult<Chat>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = request.Page ?? 1,
+                PageSize = request.PageSize ?? totalCount
+            });
         }
+
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Chat>> Read(Guid id)

@@ -137,5 +137,11 @@ namespace HBOICTKeuzewijzer.Api.Repositories
                 PageSize = request.PageSize ?? totalCount
             };
         }
+
+        public IQueryable<T> Query()
+        {
+            return _dbSet.AsQueryable();
+        }
+
     }
 }
