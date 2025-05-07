@@ -86,6 +86,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 
             // Set the current chatID
             message.ChatId = chatId;
+            message.SentAt = DateTime.Now;
             await _messageRepository.AddAsync(message);
 
             return CreatedAtAction(nameof(Create), new { chatId, id = message.Id }, message);
