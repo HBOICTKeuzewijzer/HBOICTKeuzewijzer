@@ -1,4 +1,5 @@
-﻿using HBOICTKeuzewijzer.Api.Models;
+﻿using HBOICTKeuzewijzer.Api.Attributes;
+using HBOICTKeuzewijzer.Api.Models;
 using HBOICTKeuzewijzer.Api.Repositories;
 using HBOICTKeuzewijzer.Api.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -31,6 +32,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             _userService = userService;
         }
 
+        [EnumAuthorize(Role.SystemAdmin, Role.ModuleAdmin, Role.User)]
         private async Task<Chat?> GetAuthorizedChat(Guid chatId)
         {
             var user = await _userService.GetOrCreateUserAsync(User);
