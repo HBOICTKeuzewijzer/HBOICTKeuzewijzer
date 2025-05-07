@@ -28,6 +28,9 @@ namespace HBOICTKeuzewijzer.Api.Models
         [Required]
         public int Level { get; set; }
 
+        [Required]
+        public bool Required { get; set; } = false;
+
         [ForeignKey(nameof(CategoryId))]
         public Category? Category { get; set; }
 
