@@ -362,3 +362,6 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /HBOICTKeuzewijzer.Api/Saml/FederationMetadata.xml
+/HBOICTKeuzewijzer.Api/keys
+*appsettings.Development.json
+

@@ -64,5 +64,17 @@ namespace HBOICTKeuzewijzer.Api.Services
 
             return user;
         }
+
+        public async Task<ApplicationUser?> GetByPrincipal(ClaimsPrincipal principal)
+        {
+            var externalId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrWhiteSpace(externalId))
+                throw new InvalidOperationException("Missing external user ID.");
+
+            return await appDbContext.ApplicationUsers
+                .Include(u => u.ApplicationUserRoles)
+                .FirstOrDefaultAsync(u => u.ExternalId == externalId);
+        }
     }
 }

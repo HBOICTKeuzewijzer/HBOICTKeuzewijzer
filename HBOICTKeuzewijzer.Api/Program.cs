@@ -9,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using Sustainsys.Saml2;
 using Sustainsys.Saml2.AspNetCore2;
 using Sustainsys.Saml2.Metadata;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace HBOICTKeuzewijzer.Api
 {
@@ -18,7 +20,7 @@ namespace HBOICTKeuzewijzer.Api
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            ConfigureServices(builder.Services, builder.Configuration);
+            ConfigureServices(builder.Services, builder.Configuration, builder);
 
             var app = builder.Build();
 
@@ -27,8 +29,12 @@ namespace HBOICTKeuzewijzer.Api
             app.Run();
         }
 
-        private static void ConfigureServices(IServiceCollection services, IConfiguration config)
+        private static void ConfigureServices(IServiceCollection services, IConfiguration config, WebApplicationBuilder builder)
         {
+            services.AddDataProtection()
+                .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "keys")))
+                .SetApplicationName("HBOICTKeuzewijzer");
+
             // SAML Auth Setup
             services.AddAuthentication(options =>
             {
@@ -57,35 +63,18 @@ namespace HBOICTKeuzewijzer.Api
                 });
             });
 
-
-            if (config.GetValue<bool>("Cors:AllowAny", false))
+            services.AddCors(options =>
             {
-                services.AddCors(options =>
+                options.AddDefaultPolicy(policy =>
                 {
-                    options.AddDefaultPolicy(policy =>
-                    {
-                        policy
-                            .AllowAnyOrigin()
-                            .AllowAnyMethod()
-                            .AllowAnyHeader();
-                    });
+                    var allowedOrigins = config.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+                    policy
+                        .WithOrigins(allowedOrigins)
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
                 });
-            }
-            else
-            {
-                services.AddCors(options =>
-                {
-                    options.AddDefaultPolicy(policy =>
-                    {
-                        var allowedOrigins = config.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
-                        policy
-                            .WithOrigins(allowedOrigins)
-                            .AllowAnyHeader()
-                            .AllowAnyMethod()
-                            .AllowCredentials();
-                    });
-                });
-            }
+            });
 
             // EF Core + Services
             services.AddDbContext<AppDbContext>(options =>
@@ -93,6 +82,7 @@ namespace HBOICTKeuzewijzer.Api
 
             services.AddScoped<ApplicationUserService>();
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            services.AddScoped<IStudyRouteRepository, StudyRouteRepository>();
 
 
             services.AddAuthorization();
@@ -100,7 +90,8 @@ namespace HBOICTKeuzewijzer.Api
             services.AddControllers()
                 .AddJsonOptions(options =>
                 {
-                    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+                    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                 });
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
@@ -114,6 +105,8 @@ namespace HBOICTKeuzewijzer.Api
                 app.UseSwaggerUI();
             }
 
+            app.UseCors();
+
             app.UseForwardedHeaders(new ForwardedHeadersOptions
             {
                 ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor,
@@ -121,47 +114,8 @@ namespace HBOICTKeuzewijzer.Api
                 RequireHeaderSymmetry = false
             });
 
-            app.Use(async (context, next) =>
-            {
-                var scheme = context.Request.Scheme;
-                var xfp = context.Request.Headers["X-Forwarded-Proto"].FirstOrDefault();
-                var xff = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
-
-                Console.WriteLine("==== Forwarded Header Debug ====");
-                Console.WriteLine($"Request.Scheme: {scheme}");
-                Console.WriteLine($"X-Forwarded-Proto: {xfp}");
-                Console.WriteLine($"X-Forwarded-For: {xff}");
-                Console.WriteLine("===============================");
-
-                await next();
-            });
-
-            app.Use(async (context, next) =>
-            {
-                Console.WriteLine($"[PRE-LOG] Path: {context.Request.Path}, Method: {context.Request.Method}");
-
-                if (context.Request.Path.StartsWithSegments("/saml2/Acs", StringComparison.OrdinalIgnoreCase))
-                {
-                    Console.WriteLine("==== SAML2 ACS endpoint hit ====");
-                    Console.WriteLine($"Method: {context.Request.Method}");
-                    Console.WriteLine($"Scheme: {context.Request.Scheme}");
-                    Console.WriteLine($"Content-Length: {context.Request.ContentLength}");
-                    Console.WriteLine($"Has Cookies: {context.Request.Cookies.Count > 0}");
-                    Console.WriteLine("Headers:");
-                    foreach (var header in context.Request.Headers)
-                    {
-                        Console.WriteLine($"  {header.Key}: {header.Value}");
-                    }
-                    Console.WriteLine("================================");
-                }
-
-                await next();
-            });
-
             app.UseAuthentication();
             app.UseAuthorization();
-
-            app.UseCors();
 
             app.MapControllers();
         }
