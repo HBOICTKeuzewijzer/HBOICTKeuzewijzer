@@ -7,13 +7,17 @@ namespace HBOICTKeuzewijzer.Api.Repositories;
 
 public class StudyRouteRepository : Repository<StudyRoute>, IStudyRouteRepository
 {
+    private const int MINIMUMSEMESTERS = 8;
+
     public StudyRouteRepository(AppDbContext context) : base(context)
     {
     }
 
     public async Task<List<StudyRoute>> GetForUser(ApplicationUser user)
     {
-        return await Queryable().Where(s => s.ApplicationUserId == user.Id).ToListAsync();
+        return await Queryable()
+            .Where(s => s.ApplicationUserId == user.Id)
+            .ToListAsync();
     }
 
     public async Task<bool> DeleteForUser(Guid id, ApplicationUser user)
@@ -51,8 +55,17 @@ public class StudyRouteRepository : Repository<StudyRoute>, IStudyRouteRepositor
         var studyRoute = new StudyRoute
         {
             ApplicationUserId = user.Id,
-            DisplayName = uniqueName
+            DisplayName = uniqueName,
+            Semesters = []
         };
+
+        for (var i = 0; i < MINIMUMSEMESTERS; i++)
+        {
+            studyRoute.Semesters.Add(new Semester
+            {
+                Index = i
+            });
+        }
 
         await AddAsync(studyRoute);
 
@@ -62,6 +75,8 @@ public class StudyRouteRepository : Repository<StudyRoute>, IStudyRouteRepositor
     public async Task<StudyRoute?> GetForUserById(ApplicationUser user, Guid id)
     {
         return await Queryable()
+            .Include(s => s.Semesters!)
+            .ThenInclude(s => s.Module)
             .FirstOrDefaultAsync(r => r.Id == id && r.ApplicationUserId == user.Id);
     }
 }

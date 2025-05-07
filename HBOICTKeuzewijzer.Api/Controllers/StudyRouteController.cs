@@ -13,11 +13,13 @@ namespace HBOICTKeuzewijzer.Api.Controllers
     {
         private readonly IStudyRouteRepository _studyRouteRepository;
         private readonly ApplicationUserService _applicationUserService;
+        private readonly IModuleRepository _moduleRepository;
 
-        public StudyRouteController(IStudyRouteRepository studyRouteRepository, ApplicationUserService applicationUserService)
+        public StudyRouteController(IStudyRouteRepository studyRouteRepository, IModuleRepository moduleRepository, ApplicationUserService applicationUserService)
         {
             _studyRouteRepository = studyRouteRepository;
             _applicationUserService = applicationUserService;
+            _moduleRepository = moduleRepository;
         }
 
         [EnumAuthorize(Role.Student)]
@@ -78,6 +80,8 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             }
 
             var newRoute = await _studyRouteRepository.AddWithUniqueDisplayName(student, displayName);
+
+            await _moduleRepository.FillWithRequiredModules(newRoute);
 
             return CreatedAtAction(nameof(GetStudyRoute), new { id = newRoute.Id }, newRoute);
         }

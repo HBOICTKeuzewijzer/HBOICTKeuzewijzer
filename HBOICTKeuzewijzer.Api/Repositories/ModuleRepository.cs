@@ -4,15 +4,31 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HBOICTKeuzewijzer.Api.Repositories
 {
-    public class ModuleRepository : Repository<Module>
+    public class ModuleRepository : Repository<Module>, IModuleRepository
     {
         public ModuleRepository(AppDbContext context) : base(context)
         {
         }
 
-        public async Task<IEnumerable<Module>> GetAllWithFilter(string filter)
+        public async Task FillWithRequiredModules(StudyRoute studyRoute)
         {
-            return await Queryable().Where(m => m.Description.Contains(filter)).ToListAsync();
+            var requiredModules = await Queryable().Where(m => m.Required).ToListAsync();
+
+            if (studyRoute.Semesters is null)
+            {
+                return;
+            }
+
+            var semesters = studyRoute.Semesters.ToList();
+
+            foreach (var module in requiredModules)
+            {
+                var requiredSemester = module.RequiredSemester ?? 0;
+
+                semesters[requiredSemester].Module = module;
+            }
+
+            await _context.SaveChangesAsync();
         }
     }
 }

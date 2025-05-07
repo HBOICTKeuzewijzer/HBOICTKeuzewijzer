@@ -31,6 +31,8 @@ namespace HBOICTKeuzewijzer.Api.Models
         [Required]
         public bool Required { get; set; } = false;
 
+        public int? RequiredSemester { get; set; }
+
         [ForeignKey(nameof(CategoryId))]
         public Category? Category { get; set; }
 

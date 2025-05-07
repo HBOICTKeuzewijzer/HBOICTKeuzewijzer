@@ -14,8 +14,7 @@ namespace HBOICTKeuzewijzer.Api.Models
         [Required]
         public int AcquiredECs { get; set; }
 
-        [Required]
-        public Guid ModuleId { get; set; }
+        public Guid? ModuleId { get; set; }
 
         [ForeignKey(nameof(ModuleId))]
         public Module? Module { get; set; }

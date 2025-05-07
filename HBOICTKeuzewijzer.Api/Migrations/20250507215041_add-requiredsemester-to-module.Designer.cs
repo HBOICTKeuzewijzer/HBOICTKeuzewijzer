@@ -4,6 +4,7 @@ using HBOICTKeuzewijzer.Api.DAL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HBOICTKeuzewijzer.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250507215041_add-requiredsemester-to-module")]
+    partial class addrequiredsemestertomodule
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -226,7 +229,7 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                     b.Property<int>("Index")
                         .HasColumnType("int");
 
-                    b.Property<Guid?>("ModuleId")
+                    b.Property<Guid>("ModuleId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("StudyRouteId")
@@ -324,7 +327,9 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                 {
                     b.HasOne("HBOICTKeuzewijzer.Api.Models.Module", "Module")
                         .WithMany("Semesters")
-                        .HasForeignKey("ModuleId");
+                        .HasForeignKey("ModuleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("HBOICTKeuzewijzer.Api.Models.StudyRoute", "StudyRoute")
                         .WithMany("Semesters")
