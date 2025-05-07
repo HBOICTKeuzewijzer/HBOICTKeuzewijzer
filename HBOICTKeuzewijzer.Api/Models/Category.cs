@@ -7,8 +7,9 @@ namespace HBOICTKeuzewijzer.Api.Models
         [Key]
         public Guid Id { get; set; }
 
+        [Required]
         [MaxLength(255)]
-        public string? Value { get; set; }
+        public string Value { get; set; } = string.Empty;
         public ICollection<Module>? Modules { get; set; }
 
     }

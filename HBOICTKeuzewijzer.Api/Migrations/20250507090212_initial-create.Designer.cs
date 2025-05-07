@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HBOICTKeuzewijzer.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250506114026_Cohort-for-user")]
-    partial class Cohortforuser
+    [Migration("20250507090212_initial-create")]
+    partial class initialcreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -32,12 +32,10 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Code")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)");
 
                     b.Property<string>("Cohort")
-                        .IsRequired()
                         .HasMaxLength(5)
                         .HasColumnType("nvarchar(5)");
 
@@ -95,6 +93,7 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Value")
+                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
@@ -164,7 +163,6 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                         .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(200)
                         .HasColumnType("text");
 
                     b.Property<int>("ECs")
@@ -182,9 +180,7 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("PrerequisiteJson")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 

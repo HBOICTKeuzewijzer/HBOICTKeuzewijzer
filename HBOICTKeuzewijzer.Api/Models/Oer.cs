@@ -2,17 +2,18 @@
 
 namespace HBOICTKeuzewijzer.Api.Models
 {
-        public class Oer
-        {
-            [Key]
-            public Guid Id { get; set; }
+    public class Oer
+    {
+        [Key]
+        public Guid Id { get; set; }
 
-            [MaxLength(260)]
-            public string? Filepath { get; set; }  
+        [MaxLength(260)]
+        public string? Filepath { get; set; }
 
-            [Required]
-            [MaxLength(5)]
-            public string? AcademicYear { get; set; }  
-            public ICollection<Module>? Modules { get; set; }
-        }
+        [Required]
+        [MaxLength(5)]
+        public string AcademicYear { get; set; } = string.Empty;
+
+        public ICollection<Module>? Modules { get; set; }
     }
+}

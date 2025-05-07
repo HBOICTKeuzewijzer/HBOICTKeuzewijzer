@@ -19,6 +19,5 @@ namespace HBOICTKeuzewijzer.Api.Models
 
         [Required]
         public Guid ChatId { get; set; }
-
     }
 }

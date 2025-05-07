@@ -29,7 +29,6 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Code")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)");
 
@@ -91,6 +90,7 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Value")
+                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
@@ -160,7 +160,6 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                         .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(200)
                         .HasColumnType("text");
 
                     b.Property<int>("ECs")
@@ -178,9 +177,7 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("PrerequisiteJson")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
