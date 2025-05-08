@@ -14,10 +14,16 @@ namespace HBOICTKeuzewijzer.Api.Models
         [Required]
         public DateTime SentAt { get; set; }
 
+        [Required]
+        public Guid ChatId { get; set; }
+
         [ForeignKey(nameof(ChatId))]
         public Chat? Chat { get; set; }
 
         [Required]
-        public Guid ChatId { get; set; }
+        public Guid SenderApplicationUserId { get; set; }
+
+        [ForeignKey(nameof(SenderApplicationUserId))]
+        public ApplicationUser? Sender { get; set; }
     }
 }

@@ -89,6 +89,19 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AccentColor")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("nvarchar(7)");
+
+                    b.Property<int?>("Position")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PrimaryColor")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("nvarchar(7)");
+
                     b.Property<string>("Value")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -133,10 +146,15 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<Guid>("SenderApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("SentAt")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SenderApplicationUserId");
 
                     b.HasIndex("ChatId", "SentAt")
                         .IsUnique()
@@ -300,7 +318,15 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("HBOICTKeuzewijzer.Api.Models.ApplicationUser", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderApplicationUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Chat");
+
+                    b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Module", b =>

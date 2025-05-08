@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HBOICTKeuzewijzer.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250507215041_add-requiredsemester-to-module")]
-    partial class addrequiredsemestertomodule
+    [Migration("20250508172816_changes-for-ui")]
+    partial class changesforui
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -91,6 +91,19 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AccentColor")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("nvarchar(7)");
+
+                    b.Property<int?>("Position")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PrimaryColor")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("nvarchar(7)");
 
                     b.Property<string>("Value")
                         .IsRequired()
@@ -229,7 +242,7 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                     b.Property<int>("Index")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("ModuleId")
+                    b.Property<Guid?>("ModuleId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("StudyRouteId")
@@ -327,9 +340,7 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                 {
                     b.HasOne("HBOICTKeuzewijzer.Api.Models.Module", "Module")
                         .WithMany("Semesters")
-                        .HasForeignKey("ModuleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ModuleId");
 
                     b.HasOne("HBOICTKeuzewijzer.Api.Models.StudyRoute", "StudyRoute")
                         .WithMany("Semesters")

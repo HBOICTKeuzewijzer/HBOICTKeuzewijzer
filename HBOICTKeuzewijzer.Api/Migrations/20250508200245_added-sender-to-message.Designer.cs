@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HBOICTKeuzewijzer.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250507140745_added-required-to-modules")]
-    partial class addedrequiredtomodules
+    [Migration("20250508200245_added-sender-to-message")]
+    partial class addedsendertomessage
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -92,6 +92,19 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AccentColor")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("nvarchar(7)");
+
+                    b.Property<int?>("Position")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PrimaryColor")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("nvarchar(7)");
+
                     b.Property<string>("Value")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -136,10 +149,15 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<Guid>("SenderApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("SentAt")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SenderApplicationUserId");
 
                     b.HasIndex("ChatId", "SentAt")
                         .IsUnique()
@@ -185,6 +203,9 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                     b.Property<bool>("Required")
                         .HasColumnType("bit");
 
+                    b.Property<int?>("RequiredSemester")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
@@ -226,7 +247,7 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                     b.Property<int>("Index")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("ModuleId")
+                    b.Property<Guid?>("ModuleId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("StudyRouteId")
@@ -300,7 +321,15 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("HBOICTKeuzewijzer.Api.Models.ApplicationUser", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderApplicationUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Chat");
+
+                    b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Module", b =>
@@ -324,9 +353,7 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                 {
                     b.HasOne("HBOICTKeuzewijzer.Api.Models.Module", "Module")
                         .WithMany("Semesters")
-                        .HasForeignKey("ModuleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ModuleId");
 
                     b.HasOne("HBOICTKeuzewijzer.Api.Models.StudyRoute", "StudyRoute")
                         .WithMany("Semesters")

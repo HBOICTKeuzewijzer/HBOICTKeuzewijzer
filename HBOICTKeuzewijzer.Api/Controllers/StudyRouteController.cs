@@ -105,6 +105,34 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             return NotFound("Study route not found or not authorized to delete.");
         }
 
+        [EnumAuthorize(Role.Student)]
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateStudyroute(Guid id, [FromBody] StudyRoute updatedRoute)
+        {
+            var student = await GetUser;
+            if (student is null)
+                return BadRequest("No user found.");
+
+            if (updatedRoute.Semesters is null)
+                return BadRequest();
+
+            var existingRoute = await _studyRouteRepository.GetForUserById(student, id);
+            if (existingRoute is null)
+                return NotFound("Study route not found or not authorized to update.");
+
+            foreach (var semester in existingRoute.Semesters!)
+            {
+                var relevantSemester = updatedRoute.Semesters.FirstOrDefault(s => s.Id == semester.Id);
+
+                semester.ModuleId = relevantSemester?.ModuleId ?? null;
+            }
+
+            await _studyRouteRepository.UpdateAsync(existingRoute);
+
+            return Ok(existingRoute);
+        }
+
+
 
         private Task<ApplicationUser?> GetUser => _applicationUserService.GetByPrincipal(User);
     }
