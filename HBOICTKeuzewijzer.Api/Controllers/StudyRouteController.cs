@@ -42,20 +42,36 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             });
         }
 
-        [EnumAuthorize(Role.Student)]
+        [EnumAuthorize(Role.Student, Role.SLB)]
         [HttpGet("{id}")]
         public async Task<ActionResult> GetStudyRoute(Guid id)
         {
-            var student = await GetUser;
+            var user = await GetUser;
 
-            if (student is null)
+            if (user is null)
             {
                 return BadRequest("No user found.");
             }
 
-            var data = await _studyRouteRepository.GetForUserById(student, id);
+            StudyRoute? route;
 
-            return Ok(data);
+            if (User.IsInRole(Role.SLB.ToString()))
+            {
+                // SLB can access any route
+                route = await _studyRouteRepository.GetByIdWithSemesters(id);
+            }
+            else
+            {
+                // Students can only access their own
+                route = await _studyRouteRepository.GetForUserById(user, id);
+            }
+
+            if (route is null)
+            {
+                return NotFound("Study route not found.");
+            }
+
+            return Ok(route);
         }
 
         [EnumAuthorize(Role.Student)]

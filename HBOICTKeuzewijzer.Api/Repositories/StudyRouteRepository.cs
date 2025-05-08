@@ -20,6 +20,15 @@ public class StudyRouteRepository : Repository<StudyRoute>, IStudyRouteRepositor
             .ToListAsync();
     }
 
+    public async Task<StudyRoute> GetByIdWithSemesters(Guid id)
+    {
+        return await Queryable()
+            .Include(s => s.Semesters!)
+            .ThenInclude(s => s.Module)
+            .ThenInclude(m => m.Category)
+            .FirstOrDefaultAsync(m => m.Id == id);
+    }
+
     public async Task<bool> DeleteForUser(Guid id, ApplicationUser user)
     {
         var studyRoute = await Queryable()
