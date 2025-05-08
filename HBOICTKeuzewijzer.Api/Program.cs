@@ -108,12 +108,17 @@ namespace HBOICTKeuzewijzer.Api
 
             app.UseCors();
 
-            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            var forwardedHeadersOptions = new ForwardedHeadersOptions
             {
-                ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor,
-                ForwardLimit = null,
-                RequireHeaderSymmetry = false
-            });
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+                RequireHeaderSymmetry = false,
+                ForwardLimit = null
+            };
+
+            forwardedHeadersOptions.KnownNetworks.Clear();
+            forwardedHeadersOptions.KnownProxies.Clear();
+
+            app.UseForwardedHeaders(forwardedHeadersOptions);
 
             app.UseAuthentication();
             app.UseAuthorization();
