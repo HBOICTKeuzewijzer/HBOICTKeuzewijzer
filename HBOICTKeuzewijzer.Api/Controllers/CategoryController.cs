@@ -22,7 +22,10 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         public async Task<ActionResult<IEnumerable<Category>>> GetCategories()
         {
             var categories = await _categoryRepo.GetAllAsync();
-            return Ok(categories);
+
+            var ordered = categories.OrderBy(c => c.Position);
+
+            return Ok(ordered);
         }
 
         // GET: api/Category/5

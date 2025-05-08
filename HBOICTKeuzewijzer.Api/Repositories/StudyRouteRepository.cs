@@ -77,6 +77,7 @@ public class StudyRouteRepository : Repository<StudyRoute>, IStudyRouteRepositor
         return await Queryable()
             .Include(s => s.Semesters!)
             .ThenInclude(s => s.Module)
+            .ThenInclude(m => m.Category)
             .FirstOrDefaultAsync(r => r.Id == id && r.ApplicationUserId == user.Id);
     }
 }
