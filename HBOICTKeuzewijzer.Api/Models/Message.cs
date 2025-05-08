@@ -20,10 +20,12 @@ namespace HBOICTKeuzewijzer.Api.Models
         [ForeignKey(nameof(ChatId))]
         public Chat? Chat { get; set; }
 
+        // 👇 Nieuw veld: de afzender van het bericht
         [Required]
         public Guid SenderApplicationUserId { get; set; }
 
         [ForeignKey(nameof(SenderApplicationUserId))]
         public ApplicationUser? Sender { get; set; }
     }
+
 }

@@ -2,6 +2,7 @@
 using HBOICTKeuzewijzer.Api.Repositories;
 using HBOICTKeuzewijzer.Api.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace HBOICTKeuzewijzer.Api.Controllers
 {
@@ -33,15 +34,33 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         }
 
         [HttpGet]
+        [HttpGet]
         public async Task<ActionResult<PaginatedResult<Chat>>> List([FromQuery] GetAllRequestQuery request)
         {
             var user = await _userService.GetOrCreateUserAsync(User);
-            var result = await _chatRepository.GetPaginatedAsync(request, c => 
-                (c as Chat)!.SlbApplicationUserId != user.Id
-                || (c as Chat)!.StudentApplicationUserId != user.Id
-            );
 
-            return Ok(result);
+            // Include SLB and Student in the query
+            var query = _chatRepository
+                .Query()
+                .Where(c => c.SlbApplicationUserId == user.Id || c.StudentApplicationUserId == user.Id)
+                .Include(c => c.Messages)
+                .Include(c => c.SLB) // Include SLB user details
+                .Include(c => c.Student); // Include Student user details
+
+            // Paginate the results
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .Skip((request.Page.GetValueOrDefault(1) - 1) * request.PageSize.GetValueOrDefault(10))
+                .Take(request.PageSize.GetValueOrDefault(10))
+                .ToListAsync();
+
+            return Ok(new PaginatedResult<Chat>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = request.Page ?? 1,
+                PageSize = request.PageSize ?? totalCount
+            });
         }
 
         [HttpGet("{id}")]
@@ -50,8 +69,16 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             var (user, chat) = await GetAuthorizedChat(id);
             if (chat == null) return NotFound();
 
+            // Include SLB and Student details in the response
+            chat = await _chatRepository
+                .Query()
+                .Include(c => c.SLB) // Include SLB user details
+                .Include(c => c.Student) // Include Student user details
+                .FirstOrDefaultAsync(c => c.Id == id);
+
             return Ok(chat);
         }
+
 
         [HttpPost]
         public async Task<ActionResult<Chat>> Create([FromBody] Chat chat)
