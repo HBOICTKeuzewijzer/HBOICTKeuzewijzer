@@ -34,17 +34,20 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         }
 
         [HttpGet]
+        [HttpGet]
         public async Task<ActionResult<PaginatedResult<Chat>>> List([FromQuery] GetAllRequestQuery request)
         {
             var user = await _userService.GetOrCreateUserAsync(User);
 
-            // Handmatig query opbouwen
+            // Include SLB and Student in the query
             var query = _chatRepository
-                .Query() // dit moet je toevoegen aan IRepository<T>
+                .Query()
                 .Where(c => c.SlbApplicationUserId == user.Id || c.StudentApplicationUserId == user.Id)
-                .Include(c => c.Messages); // <-- mag hier wél veilig
+                .Include(c => c.Messages)
+                .Include(c => c.SLB) // Include SLB user details
+                .Include(c => c.Student); // Include Student user details
 
-            // Paginate zelf
+            // Paginate the results
             var totalCount = await query.CountAsync();
             var items = await query
                 .Skip((request.Page.GetValueOrDefault(1) - 1) * request.PageSize.GetValueOrDefault(10))
@@ -60,15 +63,22 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             });
         }
 
-
         [HttpGet("{id}")]
         public async Task<ActionResult<Chat>> Read(Guid id)
         {
             var (user, chat) = await GetAuthorizedChat(id);
             if (chat == null) return NotFound();
 
+            // Include SLB and Student details in the response
+            chat = await _chatRepository
+                .Query()
+                .Include(c => c.SLB) // Include SLB user details
+                .Include(c => c.Student) // Include Student user details
+                .FirstOrDefaultAsync(c => c.Id == id);
+
             return Ok(chat);
         }
+
 
         [HttpPost]
         public async Task<ActionResult<Chat>> Create([FromBody] Chat chat)
