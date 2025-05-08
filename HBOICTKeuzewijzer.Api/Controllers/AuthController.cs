@@ -51,7 +51,8 @@ namespace HBOICTKeuzewijzer.Api.Controllers
                 Email = user.Email,
                 Code = user.Code,
                 Cohort = user.Cohort,
-                SessionExpiresAt = expiresUtc?.UtcDateTime
+                SessionExpiresAt = expiresUtc?.UtcDateTime,
+                ApplicationUserRoles = user.ApplicationUserRoles
             };
 
             return Ok(dto);

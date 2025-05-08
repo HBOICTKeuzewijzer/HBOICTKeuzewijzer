@@ -365,3 +365,4 @@ FodyWeavers.xsd
 /HBOICTKeuzewijzer.Api/keys
 *appsettings.Development.json
 
+/HBOICTKeuzewijzer.Api/appsettings.Development.json

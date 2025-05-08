@@ -14,7 +14,7 @@ namespace HBOICTKeuzewijzer.Api.Models
         public Guid SlbApplicationUserId { get; set; }
 
         [ForeignKey(nameof(SlbApplicationUserId))]
-        [DeleteBehavior(DeleteBehavior.NoAction)] // Later aanpassen
+        [DeleteBehavior(DeleteBehavior.NoAction)]
         public ApplicationUser? SLB { get; set; }
 
         [Required]
@@ -22,10 +22,9 @@ namespace HBOICTKeuzewijzer.Api.Models
         public Guid StudentApplicationUserId { get; set; }
 
         [ForeignKey(nameof(StudentApplicationUserId))]
-        [DeleteBehavior(DeleteBehavior.Cascade)] // Later aanpassen
+        [DeleteBehavior(DeleteBehavior.Cascade)]
         public ApplicationUser? Student { get; set; }
+        
         public ICollection<Message>? Messages { get; set; }
-
-
     }
 }

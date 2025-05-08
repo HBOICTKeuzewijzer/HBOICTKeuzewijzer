@@ -50,6 +50,12 @@ namespace HBOICTKeuzewijzer.Api.Repositories
             }
         }
 
+        public async Task DeleteAsync(T entity)
+        {
+            _dbSet.Remove(entity);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task<bool> ExistsAsync(Guid id)
         {
             return await _dbSet.AnyAsync(e => EF.Property<Guid>(e, "Id") == id);
@@ -137,5 +143,11 @@ namespace HBOICTKeuzewijzer.Api.Repositories
                 PageSize = request.PageSize ?? totalCount
             };
         }
+
+        public IQueryable<T> Query()
+        {
+            return _dbSet.AsQueryable();
+        }
+
     }
 }

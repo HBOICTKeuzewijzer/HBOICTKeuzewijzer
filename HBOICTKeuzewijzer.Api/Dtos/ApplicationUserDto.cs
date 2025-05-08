@@ -1,4 +1,6 @@
-﻿namespace HBOICTKeuzewijzer.Api.Dtos;
+﻿using HBOICTKeuzewijzer.Api.Models;
+
+namespace HBOICTKeuzewijzer.Api.Dtos;
 
 public class ApplicationUserDto
 {
@@ -8,4 +10,5 @@ public class ApplicationUserDto
     public string Code { get; set; }
     public string? Cohort { get; set; }
     public DateTime? SessionExpiresAt { get; set; }
+    public ICollection<ApplicationUserRole>? ApplicationUserRoles { get; set; }
 }

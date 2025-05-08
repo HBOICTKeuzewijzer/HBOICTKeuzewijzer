@@ -83,6 +83,7 @@ namespace HBOICTKeuzewijzer.Api
             services.AddScoped<ApplicationUserService>();
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddScoped<IStudyRouteRepository, StudyRouteRepository>();
+            services.AddScoped<IModuleRepository, ModuleRepository>();
 
 
             services.AddAuthorization();
