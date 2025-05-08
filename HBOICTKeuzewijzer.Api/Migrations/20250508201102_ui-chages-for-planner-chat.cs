@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace HBOICTKeuzewijzer.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class changesforui : Migration
+    public partial class uichagesforplannerchat : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -43,6 +43,13 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                 table: "Modules",
                 type: "int",
                 nullable: true);
+
+            migrationBuilder.AddColumn<Guid>(
+                name: "SenderApplicationUserId",
+                table: "Messages",
+                type: "uniqueidentifier",
+                nullable: false,
+                defaultValue: new Guid("00000000-0000-0000-0000-000000000000"));
 
             migrationBuilder.AlterColumn<string>(
                 name: "Value",
@@ -95,6 +102,19 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                 maxLength: 5,
                 nullable: true);
 
+            migrationBuilder.CreateIndex(
+                name: "IX_Messages_SenderApplicationUserId",
+                table: "Messages",
+                column: "SenderApplicationUserId");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Messages_ApplicationUsers_SenderApplicationUserId",
+                table: "Messages",
+                column: "SenderApplicationUserId",
+                principalTable: "ApplicationUsers",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Restrict);
+
             migrationBuilder.AddForeignKey(
                 name: "FK_Semesters_Modules_ModuleId",
                 table: "Semesters",
@@ -107,8 +127,16 @@ namespace HBOICTKeuzewijzer.Api.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropForeignKey(
+                name: "FK_Messages_ApplicationUsers_SenderApplicationUserId",
+                table: "Messages");
+
+            migrationBuilder.DropForeignKey(
                 name: "FK_Semesters_Modules_ModuleId",
                 table: "Semesters");
+
+            migrationBuilder.DropIndex(
+                name: "IX_Messages_SenderApplicationUserId",
+                table: "Messages");
 
             migrationBuilder.DropColumn(
                 name: "Required",
@@ -117,6 +145,10 @@ namespace HBOICTKeuzewijzer.Api.Migrations
             migrationBuilder.DropColumn(
                 name: "RequiredSemester",
                 table: "Modules");
+
+            migrationBuilder.DropColumn(
+                name: "SenderApplicationUserId",
+                table: "Messages");
 
             migrationBuilder.DropColumn(
                 name: "AccentColor",

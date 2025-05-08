@@ -26,355 +26,355 @@ namespace HBOICTKeuzewijzer.Api.Migrations
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.ApplicationUser", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<string>("Code")
-                    .IsRequired()
-                    .HasMaxLength(10)
-                    .HasColumnType("nvarchar(10)");
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
-                b.Property<string>("DisplayName")
-                    .IsRequired()
-                    .HasMaxLength(100)
-                    .HasColumnType("nvarchar(100)");
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
-                b.Property<string>("Email")
-                    .IsRequired()
-                    .HasMaxLength(255)
-                    .HasColumnType("nvarchar(255)");
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
-                b.Property<string>("ExternalId")
-                    .IsRequired()
-                    .HasMaxLength(255)
-                    .HasColumnType("nvarchar(255)");
+                    b.Property<string>("ExternalId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
-                b.HasKey("Id");
+                    b.HasKey("Id");
 
-                b.HasIndex("Email")
-                    .IsUnique()
-                    .HasDatabaseName("IX_ApplicationUser_Unique_Email");
+                    b.HasIndex("Email")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ApplicationUser_Unique_Email");
 
-                b.HasIndex("ExternalId")
-                    .IsUnique()
-                    .HasDatabaseName("IX_ApplicationUser_Unique_ExternalId");
+                    b.HasIndex("ExternalId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ApplicationUser_Unique_ExternalId");
 
-                b.ToTable("ApplicationUsers");
-            });
+                    b.ToTable("ApplicationUsers");
+                });
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.ApplicationUserRole", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<Guid>("ApplicationUserId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<Guid>("ApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<int>("Role")
-                    .HasColumnType("int");
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
 
-                b.HasKey("Id");
+                    b.HasKey("Id");
 
-                b.HasIndex("ApplicationUserId");
+                    b.HasIndex("ApplicationUserId");
 
-                b.ToTable("ApplicationUserRoles");
-            });
+                    b.ToTable("ApplicationUserRoles");
+                });
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Category", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<string>("Value")
-                    .HasMaxLength(255)
-                    .HasColumnType("nvarchar(255)");
+                    b.Property<string>("Value")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
-                b.HasKey("Id");
+                    b.HasKey("Id");
 
-                b.ToTable("Categories");
-            });
+                    b.ToTable("Categories");
+                });
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Chat", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<Guid>("SlbApplicationUserId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<Guid>("SlbApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<Guid>("StudentApplicationUserId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<Guid>("StudentApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.HasKey("Id");
+                    b.HasKey("Id");
 
-                b.HasIndex("SlbApplicationUserId");
+                    b.HasIndex("SlbApplicationUserId");
 
-                b.HasIndex("StudentApplicationUserId");
+                    b.HasIndex("StudentApplicationUserId");
 
-                b.ToTable("Chats");
-            });
+                    b.ToTable("Chats");
+                });
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Message", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<Guid>("ChatId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<Guid>("ChatId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<string>("MessageText")
-                    .HasMaxLength(500)
-                    .HasColumnType("nvarchar(500)");
+                    b.Property<string>("MessageText")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
-                b.Property<DateTime>("SentAt")
-                    .HasColumnType("datetime2");
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("datetime2");
 
-                b.HasKey("Id");
+                    b.HasKey("Id");
 
-                b.HasIndex("ChatId", "SentAt")
-                    .IsUnique()
-                    .HasDatabaseName("IX_Message_ChatId_SentAt");
+                    b.HasIndex("ChatId", "SentAt")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Message_ChatId_SentAt");
 
-                b.ToTable("Messages");
-            });
+                    b.ToTable("Messages");
+                });
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Module", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<Guid?>("CategoryId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<Guid?>("CategoryId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<string>("Code")
-                    .IsRequired()
-                    .HasMaxLength(20)
-                    .HasColumnType("nvarchar(20)");
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
-                b.Property<string>("Description")
-                    .HasColumnType("text");
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
 
-                b.Property<int>("ECs")
-                    .HasColumnType("int");
+                    b.Property<int>("ECs")
+                        .HasColumnType("int");
 
-                b.Property<int>("Level")
-                    .HasColumnType("int");
+                    b.Property<int>("Level")
+                        .HasColumnType("int");
 
-                b.Property<string>("Name")
-                    .IsRequired()
-                    .HasMaxLength(255)
-                    .HasColumnType("nvarchar(255)");
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
-                b.Property<Guid>("OerId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<Guid>("OerId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<string>("PrerequisiteJson")
-                    .IsRequired()
-                    .HasColumnType("nvarchar(max)");
+                    b.Property<string>("PrerequisiteJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                b.HasKey("Id");
+                    b.HasKey("Id");
 
-                b.HasIndex("CategoryId");
+                    b.HasIndex("CategoryId");
 
-                b.HasIndex("OerId");
+                    b.HasIndex("OerId");
 
-                b.ToTable("Modules");
-            });
+                    b.ToTable("Modules");
+                });
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Oer", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<string>("AcademicYear")
-                    .IsRequired()
-                    .HasMaxLength(5)
-                    .HasColumnType("nvarchar(5)");
+                    b.Property<string>("AcademicYear")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
 
-                b.Property<string>("Filepath")
-                    .HasMaxLength(260)
-                    .HasColumnType("nvarchar(260)");
+                    b.Property<string>("Filepath")
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
 
-                b.HasKey("Id");
+                    b.HasKey("Id");
 
-                b.ToTable("Oer");
-            });
+                    b.ToTable("Oer");
+                });
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Semester", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<int>("AcquiredECs")
-                    .HasColumnType("int");
+                    b.Property<int>("AcquiredECs")
+                        .HasColumnType("int");
 
-                b.Property<int>("Index")
-                    .HasColumnType("int");
+                    b.Property<int>("Index")
+                        .HasColumnType("int");
 
-                b.Property<Guid>("ModuleId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<Guid>("ModuleId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<Guid>("StudyRouteId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<Guid>("StudyRouteId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.HasKey("Id");
+                    b.HasKey("Id");
 
-                b.HasIndex("ModuleId");
+                    b.HasIndex("ModuleId");
 
-                b.HasIndex("StudyRouteId");
+                    b.HasIndex("StudyRouteId");
 
-                b.ToTable("Semesters");
-            });
+                    b.ToTable("Semesters");
+                });
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.StudyRoute", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<Guid>("ApplicationUserId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<Guid>("ApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<string>("DisplayName")
-                    .IsRequired()
-                    .HasMaxLength(100)
-                    .HasColumnType("nvarchar(100)");
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
-                b.HasKey("Id");
+                    b.HasKey("Id");
 
-                b.HasIndex("ApplicationUserId");
+                    b.HasIndex("ApplicationUserId");
 
-                b.ToTable("StudyRoutes");
-            });
+                    b.ToTable("StudyRoutes");
+                });
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.ApplicationUserRole", b =>
-            {
-                b.HasOne("HBOICTKeuzewijzer.Api.Models.ApplicationUser", "ApplicationUsers")
-                    .WithMany("ApplicationUserRoles")
-                    .HasForeignKey("ApplicationUserId")
-                    .OnDelete(DeleteBehavior.Cascade)
-                    .IsRequired();
+                {
+                    b.HasOne("HBOICTKeuzewijzer.Api.Models.ApplicationUser", "ApplicationUsers")
+                        .WithMany("ApplicationUserRoles")
+                        .HasForeignKey("ApplicationUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                b.Navigation("ApplicationUsers");
-            });
+                    b.Navigation("ApplicationUsers");
+                });
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Chat", b =>
-            {
-                b.HasOne("HBOICTKeuzewijzer.Api.Models.ApplicationUser", "SLB")
-                    .WithMany()
-                    .HasForeignKey("SlbApplicationUserId")
-                    .OnDelete(DeleteBehavior.NoAction)
-                    .IsRequired();
+                {
+                    b.HasOne("HBOICTKeuzewijzer.Api.Models.ApplicationUser", "SLB")
+                        .WithMany()
+                        .HasForeignKey("SlbApplicationUserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
 
-                b.HasOne("HBOICTKeuzewijzer.Api.Models.ApplicationUser", "Student")
-                    .WithMany()
-                    .HasForeignKey("StudentApplicationUserId")
-                    .OnDelete(DeleteBehavior.Cascade)
-                    .IsRequired();
+                    b.HasOne("HBOICTKeuzewijzer.Api.Models.ApplicationUser", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentApplicationUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                b.Navigation("SLB");
+                    b.Navigation("SLB");
 
-                b.Navigation("Student");
-            });
+                    b.Navigation("Student");
+                });
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Message", b =>
-            {
-                b.HasOne("HBOICTKeuzewijzer.Api.Models.Chat", "Chat")
-                    .WithMany("Messages")
-                    .HasForeignKey("ChatId")
-                    .OnDelete(DeleteBehavior.Cascade)
-                    .IsRequired();
+                {
+                    b.HasOne("HBOICTKeuzewijzer.Api.Models.Chat", "Chat")
+                        .WithMany("Messages")
+                        .HasForeignKey("ChatId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                b.Navigation("Chat");
-            });
+                    b.Navigation("Chat");
+                });
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Module", b =>
-            {
-                b.HasOne("HBOICTKeuzewijzer.Api.Models.Category", "Category")
-                    .WithMany("Modules")
-                    .HasForeignKey("CategoryId");
+                {
+                    b.HasOne("HBOICTKeuzewijzer.Api.Models.Category", "Category")
+                        .WithMany("Modules")
+                        .HasForeignKey("CategoryId");
 
-                b.HasOne("HBOICTKeuzewijzer.Api.Models.Oer", "Oer")
-                    .WithMany("Modules")
-                    .HasForeignKey("OerId")
-                    .OnDelete(DeleteBehavior.Cascade)
-                    .IsRequired();
+                    b.HasOne("HBOICTKeuzewijzer.Api.Models.Oer", "Oer")
+                        .WithMany("Modules")
+                        .HasForeignKey("OerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                b.Navigation("Category");
+                    b.Navigation("Category");
 
-                b.Navigation("Oer");
-            });
+                    b.Navigation("Oer");
+                });
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Semester", b =>
-            {
-                b.HasOne("HBOICTKeuzewijzer.Api.Models.Module", "Module")
-                    .WithMany("Semesters")
-                    .HasForeignKey("ModuleId")
-                    .OnDelete(DeleteBehavior.Cascade)
-                    .IsRequired();
+                {
+                    b.HasOne("HBOICTKeuzewijzer.Api.Models.Module", "Module")
+                        .WithMany("Semesters")
+                        .HasForeignKey("ModuleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                b.HasOne("HBOICTKeuzewijzer.Api.Models.StudyRoute", "StudyRoute")
-                    .WithMany("Semesters")
-                    .HasForeignKey("StudyRouteId")
-                    .OnDelete(DeleteBehavior.Cascade)
-                    .IsRequired();
+                    b.HasOne("HBOICTKeuzewijzer.Api.Models.StudyRoute", "StudyRoute")
+                        .WithMany("Semesters")
+                        .HasForeignKey("StudyRouteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                b.Navigation("Module");
+                    b.Navigation("Module");
 
-                b.Navigation("StudyRoute");
-            });
+                    b.Navigation("StudyRoute");
+                });
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.StudyRoute", b =>
-            {
-                b.HasOne("HBOICTKeuzewijzer.Api.Models.ApplicationUser", "ApplicationUser")
-                    .WithMany("StudyRoutes")
-                    .HasForeignKey("ApplicationUserId")
-                    .OnDelete(DeleteBehavior.Cascade)
-                    .IsRequired();
+                {
+                    b.HasOne("HBOICTKeuzewijzer.Api.Models.ApplicationUser", "ApplicationUser")
+                        .WithMany("StudyRoutes")
+                        .HasForeignKey("ApplicationUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                b.Navigation("ApplicationUser");
-            });
+                    b.Navigation("ApplicationUser");
+                });
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.ApplicationUser", b =>
-            {
-                b.Navigation("ApplicationUserRoles");
+                {
+                    b.Navigation("ApplicationUserRoles");
 
-                b.Navigation("StudyRoutes");
-            });
+                    b.Navigation("StudyRoutes");
+                });
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Category", b =>
-            {
-                b.Navigation("Modules");
-            });
+                {
+                    b.Navigation("Modules");
+                });
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Chat", b =>
-            {
-                b.Navigation("Messages");
-            });
+                {
+                    b.Navigation("Messages");
+                });
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Module", b =>
-            {
-                b.Navigation("Semesters");
-            });
+                {
+                    b.Navigation("Semesters");
+                });
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Oer", b =>
-            {
-                b.Navigation("Modules");
-            });
+                {
+                    b.Navigation("Modules");
+                });
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.StudyRoute", b =>
-            {
-                b.Navigation("Semesters");
-            });
+                {
+                    b.Navigation("Semesters");
+                });
 #pragma warning restore 612, 618
         }
     }

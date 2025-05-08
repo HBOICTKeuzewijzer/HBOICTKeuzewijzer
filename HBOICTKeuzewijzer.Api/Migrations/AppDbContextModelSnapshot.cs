@@ -321,7 +321,7 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                     b.HasOne("HBOICTKeuzewijzer.Api.Models.ApplicationUser", "Sender")
                         .WithMany()
                         .HasForeignKey("SenderApplicationUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Chat");
