@@ -31,9 +31,25 @@ namespace HBOICTKeuzewijzer.Api.DAL
                 .HasDatabaseName("IX_ApplicationUser_Unique_ExternalId");
 
             modelBuilder.Entity<Message>()
-                .HasIndex(m => new { m.ChatId, m.SentAt })  
+                .HasIndex(m => new { m.ChatId, m.SentAt })
                 .IsUnique()
                 .HasDatabaseName("IX_Message_ChatId_SentAt");
+
+            // 🔥 Voeg juiste restrict toe aan *relatie met Sender*
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Sender)
+                .WithMany()
+                .HasForeignKey(m => m.SenderApplicationUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Optioneel: ook voor relatie met Chat
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Chat)
+                .WithMany(c => c.Messages)
+                .HasForeignKey(m => m.ChatId)
+                .OnDelete(DeleteBehavior.Cascade); // mag, zolang het maar niet dubbel op Sender gaat
+
         }
+
     }
 }

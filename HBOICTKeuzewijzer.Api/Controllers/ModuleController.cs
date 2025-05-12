@@ -22,11 +22,19 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         }
 
         // GET: api/Module
-        [HttpGet]
-        public async Task<ActionResult<PaginatedResult<Module>>> GetModules(
+        [HttpGet("paged")]
+        public async Task<ActionResult<PaginatedResult<Module>>> GetPagedModules(
             [FromQuery] GetAllRequestQuery request)
         {
             var result = await _moduleRepo.GetPaginatedAsync(request, m => m.Category);
+            return Ok(result);
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<List<Module>>> GetModules()
+        {
+            var result = await _moduleRepo.GetAllIncludingAsync(m => m.Category);
+
             return Ok(result);
         }
 
