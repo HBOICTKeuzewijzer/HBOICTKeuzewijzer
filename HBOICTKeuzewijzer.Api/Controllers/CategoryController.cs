@@ -19,10 +19,13 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 
         // GET: api/Category
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Category>>> GetWithModules()
+        public async Task<ActionResult<IEnumerable<Category>>> GetCategories()
         {
-            var categories = await _categoryRepo.GetAllIncludingAsync(c => c.Modules);
-            return Ok(categories);
+            var categories = await _categoryRepo.GetAllAsync();
+
+            var ordered = categories.OrderBy(c => c.Position);
+
+            return Ok(ordered);
         }
 
         // GET: api/Category/5

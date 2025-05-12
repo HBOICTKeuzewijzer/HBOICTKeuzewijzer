@@ -1,11 +1,12 @@
-﻿using HBOICTKeuzewijzer.Api.Services;
+﻿using HBOICTKeuzewijzer.Api.Dtos;
+using HBOICTKeuzewijzer.Api.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HBOICTKeuzewijzer.Api.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
     {
@@ -21,7 +22,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         {
             return Challenge(new AuthenticationProperties
             {
-                RedirectUri = $"/api/auth/success?returnUrl={Uri.EscapeDataString(returnUrl)}"
+                RedirectUri = $"/auth/success?returnUrl={Uri.EscapeDataString(returnUrl)}"
             }, "Saml2");
         }
 
@@ -40,7 +41,21 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         {
             var user = await _applicationUserService.GetOrCreateUserAsync(User);
 
-            return Ok(user);
+            var authResult = await HttpContext.AuthenticateAsync();
+            var expiresUtc = authResult.Properties?.ExpiresUtc;
+
+            var dto = new ApplicationUserDto
+            {
+                Id = user.Id,
+                DisplayName = user.DisplayName,
+                Email = user.Email,
+                Code = user.Code,
+                Cohort = user.Cohort,
+                SessionExpiresAt = expiresUtc?.UtcDateTime,
+                ApplicationUserRoles = user.ApplicationUserRoles
+            };
+
+            return Ok(dto);
         }
     }
 }

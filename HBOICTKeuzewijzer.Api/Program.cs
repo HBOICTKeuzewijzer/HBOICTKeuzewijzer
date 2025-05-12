@@ -4,11 +4,13 @@ using HBOICTKeuzewijzer.Api.Repositories;
 using HBOICTKeuzewijzer.Api.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Sustainsys.Saml2;
 using Sustainsys.Saml2.AspNetCore2;
 using Sustainsys.Saml2.Metadata;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace HBOICTKeuzewijzer.Api
 {
@@ -18,7 +20,7 @@ namespace HBOICTKeuzewijzer.Api
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            ConfigureServices(builder.Services, builder.Configuration);
+            ConfigureServices(builder.Services, builder.Configuration, builder);
 
             var app = builder.Build();
 
@@ -27,8 +29,12 @@ namespace HBOICTKeuzewijzer.Api
             app.Run();
         }
 
-        private static void ConfigureServices(IServiceCollection services, IConfiguration config)
+        private static void ConfigureServices(IServiceCollection services, IConfiguration config, WebApplicationBuilder builder)
         {
+            services.AddDataProtection()
+                .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "keys")))
+                .SetApplicationName("HBOICTKeuzewijzer");
+
             // SAML Auth Setup
             services.AddAuthentication(options =>
             {
@@ -40,6 +46,12 @@ namespace HBOICTKeuzewijzer.Api
             {
                 options.SPOptions.EntityId = new EntityId(config["Saml:SPEntityId"] ?? throw new Exception("Saml:SPEntityId not set"));
 
+                options.SPOptions.ReturnUrl = new Uri(config["Saml:ReturnUrl"] ?? throw new Exception("Saml:ReturnUrl not set"));
+
+                options.SPOptions.PublicOrigin = new Uri(config["Saml:PublicOrigin"] ?? throw new Exception("Saml:PublicOrigin not set"));
+
+                options.SPOptions.ModulePath = "/saml2";
+
                 var metadataRelativePath = config["Saml:IdpMetadata"] ?? throw new Exception("Saml:IdpMetadata not set");
                 var tenantId = config["AzureAd:TenantId"] ?? throw new Exception("AzureAd:TenantId not set");
                 var metadataPath = Path.Combine(AppContext.BaseDirectory, metadataRelativePath);
@@ -49,13 +61,8 @@ namespace HBOICTKeuzewijzer.Api
                     LoadMetadata = true,
                     MetadataLocation = metadataPath
                 });
-
-                options.SPOptions.ReturnUrl = new Uri(config["Saml:ReturnUrl"] ?? throw new Exception("Saml:ReturnUrl not set"));
-
-                options.SPOptions.PublicOrigin = new Uri(config["Saml:PublicOrigin"] ?? throw new Exception("Saml:PublicOrigin not set"));
             });
 
-            // CORS
             services.AddCors(options =>
             {
                 options.AddDefaultPolicy(policy =>
@@ -75,14 +82,18 @@ namespace HBOICTKeuzewijzer.Api
 
             services.AddScoped<ApplicationUserService>();
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            services.AddScoped<IStudyRouteRepository, StudyRouteRepository>();
+            services.AddScoped<IModuleRepository, ModuleRepository>();
 
 
             services.AddAuthorization();
             services.AddSingleton<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
-            services.AddControllers().AddJsonOptions(opt =>
-            {
-                opt.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-            });
+            services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                });
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
         }
@@ -95,12 +106,22 @@ namespace HBOICTKeuzewijzer.Api
                 app.UseSwaggerUI();
             }
 
-            app.UseHttpsRedirection();
+            app.UseCors();
+
+            var forwardedHeadersOptions = new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+                RequireHeaderSymmetry = false,
+                ForwardLimit = null
+            };
+
+            forwardedHeadersOptions.KnownNetworks.Clear();
+            forwardedHeadersOptions.KnownProxies.Clear();
+
+            app.UseForwardedHeaders(forwardedHeadersOptions);
 
             app.UseAuthentication();
             app.UseAuthorization();
-
-            app.UseCors();
 
             app.MapControllers();
         }
