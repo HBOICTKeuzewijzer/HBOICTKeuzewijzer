@@ -14,6 +14,7 @@ namespace HBOICTKeuzewijzer.Api.DAL
         public DbSet<Oer> Oer { get; set; } = null!;
         public DbSet<Semester> Semesters { get; set; } = null!;
         public DbSet<StudyRoute> StudyRoutes { get; set; } = null!;
+        public DbSet<Slb> Slb { get; set; } = null!;
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
