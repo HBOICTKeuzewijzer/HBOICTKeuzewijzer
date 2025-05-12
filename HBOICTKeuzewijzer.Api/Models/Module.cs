@@ -16,21 +16,26 @@ namespace HBOICTKeuzewijzer.Api.Models
         [Required]
         public string Code { get; set; } = string.Empty;
 
-        [MaxLength(200)]
         [Column(TypeName = "text")]
         public string? Description { get; set; }
 
-        [MaxLength(200)]
-        [Required]
+        [Column(TypeName = "text")]
         public string? PrerequisiteJson { get; set; }
 
         [Required]
         public int ECs { get; set; }
+
         [Required]
         public int Level { get; set; }
 
+        [Required]
+        public bool Required { get; set; } = false;
+
+        public int? RequiredSemester { get; set; }
+
         [ForeignKey(nameof(CategoryId))]
         public Category? Category { get; set; }
+
         public Guid? CategoryId { get; set; }
 
         [ForeignKey(nameof(OerId))]

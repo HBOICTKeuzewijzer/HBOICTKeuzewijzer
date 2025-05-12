@@ -37,12 +37,23 @@ namespace HBOICTKeuzewijzer.Api.Repositories
         {
             _dbSet.Attach(entity);
             _context.Entry(entity).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(Guid id)
         {
             var entity = await _dbSet.FindAsync(id);
-            if (entity != null) _dbSet.Remove(entity);
+            if (entity != null)
+            {
+                _dbSet.Remove(entity);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task DeleteAsync(T entity)
+        {
+            _dbSet.Remove(entity);
+            await _context.SaveChangesAsync();
         }
 
         public async Task<bool> ExistsAsync(Guid id)
@@ -132,5 +143,11 @@ namespace HBOICTKeuzewijzer.Api.Repositories
                 PageSize = request.PageSize ?? totalCount
             };
         }
+
+        public IQueryable<T> Query()
+        {
+            return _dbSet.AsQueryable();
+        }
+
     }
 }
