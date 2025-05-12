@@ -21,6 +21,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             _userService = userService;
         }
 
+        // GET: /slb/
         [HttpGet]
         [EnumAuthorize(Role.SLB)]
         public async Task<ActionResult<PaginatedResult<ApplicationUser>>> GetStudents(
@@ -33,6 +34,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             return Ok(result);
         }
 
+        // PUT: /slb/
         [HttpPut("{slbId:guid}/{studentId:guid}")]
         [EnumAuthorize(Role.SystemAdmin)]
         public async Task<IActionResult> AddStudent(Guid slbId, Guid studentId)
