@@ -17,7 +17,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             _categoryRepo = categoryRepo;
         }
 
-        // GET: api/Category
+        // GET: api/Category, test(bas)
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Category>>> GetCategories()
         {
