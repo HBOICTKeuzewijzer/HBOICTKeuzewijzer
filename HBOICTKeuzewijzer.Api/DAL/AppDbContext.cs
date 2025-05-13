@@ -50,6 +50,18 @@ namespace HBOICTKeuzewijzer.Api.DAL
                 .HasForeignKey(m => m.ChatId)
                 .OnDelete(DeleteBehavior.Cascade); // mag, zolang het maar niet dubbel op Sender gaat
 
+            modelBuilder.Entity<Slb>()
+                .HasOne(s => s.SlbApplicationUser)
+                .WithMany()
+                .HasForeignKey(s => s.SlbApplicationUserId)
+                .OnDelete(DeleteBehavior.Restrict); // Bij Slb verwijderen moet je handmatig de relaties verwijderen
+
+            modelBuilder.Entity<Slb>()
+                .HasOne(s => s.StudentApplicationUser)
+                .WithMany()
+                .HasForeignKey(s => s.StudentApplicationUserId)
+                .OnDelete(DeleteBehavior.Cascade); // Bij Student verwijderen wordt ook de relatie tussen Slb - Student verwijderd
+
         }
 
     }
