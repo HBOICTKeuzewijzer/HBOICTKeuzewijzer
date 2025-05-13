@@ -54,13 +54,13 @@ namespace HBOICTKeuzewijzer.Api.DAL
                 .HasOne(s => s.SlbApplicationUser)
                 .WithMany()
                 .HasForeignKey(s => s.SlbApplicationUserId)
-                .OnDelete(DeleteBehavior.Restrict); // Gaat anders dubbel
+                .OnDelete(DeleteBehavior.Restrict); // Bij Slb verwijderen moet je handmatig de relaties verwijderen
 
             modelBuilder.Entity<Slb>()
                 .HasOne(s => s.StudentApplicationUser)
                 .WithMany()
                 .HasForeignKey(s => s.StudentApplicationUserId)
-                .OnDelete(DeleteBehavior.Restrict); // Gaat anders dubbel
+                .OnDelete(DeleteBehavior.Cascade); // Bij Student verwijderen wordt ook de relatie tussen Slb - Student verwijderd
 
         }
 
