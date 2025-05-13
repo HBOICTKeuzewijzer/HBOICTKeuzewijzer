@@ -4,6 +4,7 @@ using HBOICTKeuzewijzer.Api.DAL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HBOICTKeuzewijzer.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250508094725_new")]
+    partial class @new
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -89,19 +92,6 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("AccentColor")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .HasColumnType("nvarchar(7)");
-
-                    b.Property<int?>("Position")
-                        .HasColumnType("int");
-
-                    b.Property<string>("PrimaryColor")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .HasColumnType("nvarchar(7)");
-
                     b.Property<string>("Value")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -121,8 +111,14 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                     b.Property<Guid>("SlbApplicationUserId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("SlbRead")
+                        .HasColumnType("bit");
+
                     b.Property<Guid>("StudentApplicationUserId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("StudentRead")
+                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 
@@ -146,17 +142,12 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<Guid>("SenderApplicationUserId")
+                    b.Property<Guid?>("SenderApplicationUserId")
+                        .IsRequired()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("SentAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<bool>("SlbRead")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("StudentRead")
-                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 
@@ -203,12 +194,6 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                     b.Property<string>("PrerequisiteJson")
                         .HasColumnType("text");
 
-                    b.Property<bool>("Required")
-                        .HasColumnType("bit");
-
-                    b.Property<int?>("RequiredSemester")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
@@ -250,7 +235,7 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                     b.Property<int>("Index")
                         .HasColumnType("int");
 
-                    b.Property<Guid?>("ModuleId")
+                    b.Property<Guid>("ModuleId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("StudyRouteId")
@@ -356,7 +341,9 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                 {
                     b.HasOne("HBOICTKeuzewijzer.Api.Models.Module", "Module")
                         .WithMany("Semesters")
-                        .HasForeignKey("ModuleId");
+                        .HasForeignKey("ModuleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("HBOICTKeuzewijzer.Api.Models.StudyRoute", "StudyRoute")
                         .WithMany("Semesters")

@@ -3,6 +3,8 @@ using HBOICTKeuzewijzer.Api.Repositories;
 using HBOICTKeuzewijzer.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using HBOICTKeuzewijzer.Api.Dtos;
+
 
 namespace HBOICTKeuzewijzer.Api.Controllers
 {
@@ -95,6 +97,79 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             if (chat == null) return NotFound();
 
             await _chatRepository.DeleteAsync(id);
+            return NoContent();
+        }
+
+        [HttpGet("has-unread")]
+        public async Task<ActionResult<List<ChatUnreadDto>>> HasUnreadMessages()
+        {
+            var user = await _userService.GetOrCreateUserAsync(User);
+
+            var isSlb = await _chatRepository.Query().AnyAsync(c => c.SlbApplicationUserId == user.Id);
+            var isStudent = await _chatRepository.Query().AnyAsync(c => c.StudentApplicationUserId == user.Id);
+
+            if (!isSlb && !isStudent)
+            {
+                return Ok(new List<ChatUnreadDto>());
+            }
+
+            var chats = await _chatRepository.Query()
+                .Where(c => (isSlb && c.SlbApplicationUserId == user.Id) ||
+                            (isStudent && c.StudentApplicationUserId == user.Id))
+                .Select(chat => new ChatUnreadDto
+                {
+                    ChatId = chat.Id,
+                    HasUnread = isSlb
+                        ? chat.Messages.Any(m => !m.SlbRead)
+                        : chat.Messages.Any(m => !m.StudentRead)
+                })
+                .ToListAsync();
+
+            return Ok(chats);
+        }
+
+        [HttpPut("mark-as-read/{chatId}")]
+        public async Task<IActionResult> MarkChatAsRead(Guid chatId)
+        {
+            var user = await _userService.GetOrCreateUserAsync(User);
+
+            var isSlb = await _chatRepository.Query().AnyAsync(c => c.SlbApplicationUserId == user.Id);
+            var isStudent = await _chatRepository.Query().AnyAsync(c => c.StudentApplicationUserId == user.Id);
+
+            if (!isSlb && !isStudent)
+            {
+                return BadRequest("De gebruiker heeft geen toegang tot deze chat.");
+            }
+
+            var chat = await _chatRepository.Query()
+                .Include(c => c.Messages) 
+                .Where(c => c.Id == chatId &&
+                            ((isSlb && c.SlbApplicationUserId == user.Id) ||
+                             (isStudent && c.StudentApplicationUserId == user.Id)))
+                .FirstOrDefaultAsync();
+
+            if (chat == null)
+            {
+                return NotFound("Chat niet gevonden.");
+            }
+
+            if (isSlb)
+            {
+                chat.Messages
+                    .Where(m => !m.SlbRead)
+                    .ToList()
+                    .ForEach(m => m.SlbRead = true);
+            }
+            else if (isStudent)
+            {
+                chat.Messages
+                    .Where(m => !m.StudentRead)
+                    .ToList()
+                    .ForEach(m => m.StudentRead = true);
+            }
+
+            await _chatRepository.UpdateAsync(chat);
+
             return NoContent();
         }
 

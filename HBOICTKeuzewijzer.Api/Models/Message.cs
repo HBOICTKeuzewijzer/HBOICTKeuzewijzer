@@ -26,6 +26,12 @@ namespace HBOICTKeuzewijzer.Api.Models
 
         [ForeignKey(nameof(SenderApplicationUserId))]
         public ApplicationUser? Sender { get; set; }
+        [Required]
+        public bool SlbRead { get; set; } = false;
+        [Required]
+
+        public bool StudentRead { get; set; } = false;
+
     }
 
 }
