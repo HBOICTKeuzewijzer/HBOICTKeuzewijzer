@@ -95,7 +95,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         {
             var (user, chat) = await GetAuthorizedChat(id);
             if (chat == null) return NotFound();
-
+                
             await _chatRepository.DeleteAsync(id);
             return NoContent();
         }
@@ -175,23 +175,48 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         [HttpPost("create")]
         public async Task<ActionResult<Chat>> CreateWithEmail([FromQuery] string email)
         {
-            // Find the user to chat with by email
             var otherUser = await _userService.GetByEmailAsync(email);
             if (otherUser == null)
             {
                 return NotFound($"User with email '{email}' not found.");
             }
 
-            // Get the current user
             var currentUser = await _userService.GetOrCreateUserAsync(User);
 
-            // Prevent creating a chat with yourself
             if (currentUser.Id == otherUser.Id)
             {
                 return BadRequest("Cannot create a chat with yourself.");
             }
 
-            // Check if a chat already exists between these users
+            var currentUserWithRoles = await _userService.GetUserWithRolesByIdAsync(currentUser.Id);
+            var otherUserWithRoles = await _userService.GetUserWithRolesByIdAsync(otherUser.Id);
+
+            if (currentUserWithRoles == null || otherUserWithRoles == null)
+            {
+                return BadRequest("Could not determine user roles.");
+            }
+
+            bool IsSlb(ApplicationUser user) =>
+                user.ApplicationUserRoles?.Any(r => r.Role == Role.SLB) == true;
+
+            Guid slbId, studentId;
+            if (IsSlb(currentUserWithRoles) && !IsSlb(otherUserWithRoles))
+            {
+                slbId = currentUser.Id;
+                studentId = otherUser.Id;
+            }
+            else if (!IsSlb(currentUserWithRoles) && IsSlb(otherUserWithRoles))
+            {
+                slbId = otherUser.Id;
+                studentId = currentUser.Id;
+            }
+            else
+            {
+                slbId = currentUser.Id;
+                studentId = otherUser.Id;
+            }
+
+           
             var existingChat = await _chatRepository.Query()
                 .FirstOrDefaultAsync(c =>
                     (c.SlbApplicationUserId == currentUser.Id && c.StudentApplicationUserId == otherUser.Id) ||
@@ -201,18 +226,19 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             {
                 return Ok(existingChat);
             }
-            //todo dit aanpassen
-            // Decide who is SLB and who is Student (adjust logic as needed)
+
+
             var chat = new Chat
             {
-                SlbApplicationUserId = currentUser.Id,
-                StudentApplicationUserId = otherUser.Id
+                SlbApplicationUserId = slbId,
+                StudentApplicationUserId = studentId
             };
 
             await _chatRepository.AddAsync(chat);
 
             return CreatedAtAction(nameof(Read), new { id = chat.Id }, chat);
         }
+
 
 
     }

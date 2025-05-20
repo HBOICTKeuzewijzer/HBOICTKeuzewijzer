@@ -81,6 +81,13 @@ namespace HBOICTKeuzewijzer.Api.Services
             return await appDbContext.ApplicationUsers
                 .FirstOrDefaultAsync(u => u.Email == email);
         }
+        public async Task<ApplicationUser?> GetUserWithRolesByIdAsync(Guid id)
+        {
+            return await appDbContext.ApplicationUsers
+                .Include(u => u.ApplicationUserRoles)
+                .FirstOrDefaultAsync(u => u.Id == id);
+        }
+
 
 
 
