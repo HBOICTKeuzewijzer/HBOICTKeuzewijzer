@@ -76,5 +76,13 @@ namespace HBOICTKeuzewijzer.Api.Services
                 .Include(u => u.ApplicationUserRoles)
                 .FirstOrDefaultAsync(u => u.ExternalId == externalId);
         }
+        public async Task<ApplicationUser?> GetByEmailAsync(string email)
+        {
+            return await appDbContext.ApplicationUsers
+                .FirstOrDefaultAsync(u => u.Email == email);
+        }
+
+
+
     }
 }

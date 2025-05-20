@@ -172,6 +172,48 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 
             return NoContent();
         }
+        [HttpPost("create")]
+        public async Task<ActionResult<Chat>> CreateWithEmail([FromQuery] string email)
+        {
+            // Find the user to chat with by email
+            var otherUser = await _userService.GetByEmailAsync(email);
+            if (otherUser == null)
+            {
+                return NotFound($"User with email '{email}' not found.");
+            }
+
+            // Get the current user
+            var currentUser = await _userService.GetOrCreateUserAsync(User);
+
+            // Prevent creating a chat with yourself
+            if (currentUser.Id == otherUser.Id)
+            {
+                return BadRequest("Cannot create a chat with yourself.");
+            }
+
+            // Check if a chat already exists between these users
+            var existingChat = await _chatRepository.Query()
+                .FirstOrDefaultAsync(c =>
+                    (c.SlbApplicationUserId == currentUser.Id && c.StudentApplicationUserId == otherUser.Id) ||
+                    (c.SlbApplicationUserId == otherUser.Id && c.StudentApplicationUserId == currentUser.Id));
+
+            if (existingChat != null)
+            {
+                return Ok(existingChat);
+            }
+            //todo dit aanpassen
+            // Decide who is SLB and who is Student (adjust logic as needed)
+            var chat = new Chat
+            {
+                SlbApplicationUserId = currentUser.Id,
+                StudentApplicationUserId = otherUser.Id
+            };
+
+            await _chatRepository.AddAsync(chat);
+
+            return CreatedAtAction(nameof(Read), new { id = chat.Id }, chat);
+        }
+
 
     }
 }
