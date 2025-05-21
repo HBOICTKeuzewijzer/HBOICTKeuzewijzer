@@ -114,7 +114,14 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             }
         }
 
-        // Change Students zoals proeftoets
+        /// <summary>
+        /// Replaces all existing student relationships for a given SLB counselor with a new list of students.
+        /// Any previously linked students not in the new list will be unlinked, and new students not yet linked will be added.
+        /// Accessible only to administrators.
+        /// </summary>
+        /// <param name="slbId">The ID of the SLB counselor.</param>
+        /// <param name="studentIds">A list of student IDs to associate with the SLB counselor.</param>
+        /// <returns>204 NoContent on success.</returns>
         [HttpPut("ChangeStudents/{slbId:guid}")]
         [EnumAuthorize(Role.SystemAdmin)]
         public async Task<ActionResult> ChangeStudents(Guid slbId, [FromBody] List<Guid> studentIds)
