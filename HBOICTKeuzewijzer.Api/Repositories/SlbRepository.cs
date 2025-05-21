@@ -69,7 +69,7 @@ namespace HBOICTKeuzewijzer.Api.Repositories
                     EF.Functions.Like(u.Email, $"%{request.Filter}%"));
             }
 
-            // Sortering
+            // Sorting
             if (!string.IsNullOrEmpty(request.SortColumn))
             {
                 var propertyInfo = typeof(ApplicationUser).GetProperty(request.SortColumn,
@@ -96,7 +96,7 @@ namespace HBOICTKeuzewijzer.Api.Repositories
                 }
             }
 
-            // Count voordat de paginering gebeurt (wil natuurlijk bepalen hoeveel resultaten per pagina)
+            // Count for pagination (How many results per page)
             var totalCount = await query.CountAsync();
 
             // Pagination
@@ -140,7 +140,7 @@ namespace HBOICTKeuzewijzer.Api.Repositories
         public async Task AddSlbRelationAsync(Guid slbId, Guid studentId)
         {
             if (await RelationExistsAsync(slbId, studentId))
-                throw new InvalidOperationException("Deze student is al gekoppeld aan deze SLB'er.");
+                throw new InvalidOperationException("This student is already linked to this Slb'er.");
 
             var slbRelatie = new Slb
             {
@@ -158,10 +158,26 @@ namespace HBOICTKeuzewijzer.Api.Repositories
             var relatie = await GetRelationAsync(slbId, studentId);
 
             if (relatie == null)
-                throw new InvalidOperationException("Relatie niet gevonden.");
+                throw new InvalidOperationException("Relation not found.");
 
             await DeleteAsync(relatie.Id);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<StudentDto>> GetAllRelationsForSlbAsync(Guid slbId)
+        {
+            return await _dbSet
+                .Include(s => s.StudentApplicationUser)
+                .Where(s => s.SlbApplicationUserId == slbId)
+                .Select(s => new StudentDto
+                {
+                    Id = s.StudentApplicationUser.Id,
+                    DisplayName = s.StudentApplicationUser.DisplayName,
+                    Email = s.StudentApplicationUser.Email,
+                    Code = s.StudentApplicationUser.Code,
+                    Cohort = s.StudentApplicationUser.Cohort
+                })
+            .ToListAsync();
         }
     }
 }

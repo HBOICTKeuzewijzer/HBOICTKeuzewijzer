@@ -13,5 +13,7 @@ namespace HBOICTKeuzewijzer.Api.Repositories
         Task<Slb?> GetRelationAsync(Guid slbId, Guid studentId);
         Task AddSlbRelationAsync(Guid slbId, Guid studentId);
         Task RemoveSlbRelationAsync(Guid slbId, Guid studentId);
+
+        Task<List<StudentDto>> GetAllRelationsForSlbAsync(Guid slbId);
     }
 }

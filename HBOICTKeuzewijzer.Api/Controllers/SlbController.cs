@@ -22,11 +22,11 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         }
 
         /// <summary>
-        /// Haalt een paginated lijst van alle SLB'ers op.
-        /// Alleen toegankelijk voor beheerders.
+        /// Retrieves a paginated list of all SLB counselors.
+        /// Accessible only to administrators.
         /// </summary>
-        /// <param name="request">Paginatieparameters zoals pagina en grootte.</param>
-        /// <returns>Een paginated lijst van SLB'ers.</returns>
+        /// <param name="request">Pagination parameters such as page number and page size.</param>
+        /// <returns>A paginated list of all SLB counselors.</returns>
         [HttpGet("list")]
         [EnumAuthorize(Role.SystemAdmin)]
         public async Task<ActionResult<PaginatedResult<Slb>>> GetPagedSlb(
@@ -37,12 +37,12 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         }
 
         /// <summary>
-        /// Haalt een paginated lijst van studenten op die gekoppeld zijn aan een specifieke SLB'er.
-        /// Alleen toegankelijk voor beheerders.
+        /// Retrieves a paginated list of students linked to a speficic SLB counselor.
+        /// Accesible only to administrators
         /// </summary>
-        /// <param name="slbId">De ID van de SLB'er.</param>
-        /// <param name="request">Paginatieparameters.</param>
-        /// <returns>Een paginated lijst van studenten.</returns>
+        /// <param name="slbId">The ID of the SLB counselor.</param>
+        /// <param name="request">Pagination parameters.</param>
+        /// <returns>A paginated list of students.</returns>
         [HttpGet("{slbId:guid}/students")]
         [EnumAuthorize(Role.SystemAdmin)]
         public async Task<ActionResult<PaginatedResult<ApplicationUser>>> GetStudentsForSlb(Guid slbId, [FromQuery] GetAllRequestQuery request)
@@ -52,11 +52,11 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         }
 
         /// <summary>
-        /// Haalt een paginated lijst van studenten op die gekoppeld zijn aan de ingelogde SLB'er.
-        /// Alleen toegankelijk voor SLB-gebruikers.
+        /// Retrieves a paginated list of students linked to the currently logged-in SLB counselor.
+        /// Accessible only to SLB users.
         /// </summary>
-        /// <param name="request">Paginatieparameters.</param>
-        /// <returns>Een paginated lijst van studenten.</returns>
+        /// <param name="request">Pagination parameters.</param>
+        /// <returns>A paginated list of students.</returns>
         [HttpGet("myStudents")]
         [EnumAuthorize(Role.SLB)]
         public async Task<ActionResult<PaginatedResult<ApplicationUser>>> GetStudents(
@@ -70,12 +70,12 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         }
 
         /// <summary>
-        /// Voegt een relatie toe tussen een SLB'er en een student.
-        /// Alleen toegankelijk voor beheerders.
+        /// Adds a relationship between an SLB counselor and a student.
+        /// Accessible only to administrators.
         /// </summary>
-        /// <param name="slbId">De ID van de SLB'er.</param>
-        /// <param name="studentId">De ID van de student.</param>
-        /// <returns>204 NoContent bij succes, of een foutmelding bij failure.</returns>
+        /// <param name="slbId">The ID of the SLB counselor.</param>
+        /// <param name="studentId">The ID of the student.</param>
+        /// <returns>204 NoContent on success, or an error message on failure.</returns>
         [HttpPut("{slbId:guid}/{studentId:guid}")]
         [EnumAuthorize(Role.SystemAdmin)]
         public async Task<IActionResult> AddStudent(Guid slbId, Guid studentId)
@@ -92,12 +92,12 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         }
 
         /// <summary>
-        /// Verwijdert de relatie tussen een SLB'er en een student.
-        /// Alleen toegankelijk voor beheerders.
+        /// Removes the relationship between an SLB counselor and a student.
+        /// Accessible only to administrators.
         /// </summary>
-        /// <param name="slbId">De ID van de SLB'er.</param>
-        /// <param name="studentId">De ID van de student.</param>
-        /// <returns>204 NoContent bij succes, of 404 bij niet gevonden relatie.</returns>
+        /// <param name="slbId">The ID of the SLB counselor.</param>
+        /// <param name="studentId">The ID of the student.</param>
+        /// <returns>204 NoContent on success, or 404 if the relationship was not found.</returns>
         [HttpDelete("{slbId:guid}/{studentId:guid}")]
         [EnumAuthorize(Role.SystemAdmin)]
         public async Task<IActionResult> RemoveStudent(Guid slbId, Guid studentId)
@@ -111,6 +111,36 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             {
                 return NotFound(ex.Message);
             }
+        }
+
+        // Change Students zoals proeftoets
+        [HttpPut("ChangeStudents/{slbId:guid}")]
+        [EnumAuthorize(Role.SystemAdmin)]
+        public async Task<ActionResult> ChangeStudents(Guid slbId, [FromBody] List<Guid> studentIds)
+        {
+            // Get all exisiting relations
+            var existingRelations = await _slbRepo.GetAllRelationsForSlbAsync(slbId);
+
+            // Delete relations that aren't in new list
+            foreach (var oldStudent in existingRelations)
+            {
+                if (!studentIds.Contains(oldStudent.Id))
+                {
+                    await _slbRepo.RemoveSlbRelationAsync(slbId, oldStudent.Id);
+                }
+            }
+
+            // Add relations that didn't exist yet
+            foreach (var newStudentId in studentIds)
+            {
+                var exists = await _slbRepo.RelationExistsAsync(slbId, newStudentId);
+                if (!exists)
+                {
+                    await _slbRepo.AddSlbRelationAsync(slbId, newStudentId);
+                }
+            }
+
+            return NoContent();
         }
     }
 }
