@@ -1,4 +1,5 @@
 ﻿using HBOICTKeuzewijzer.Api.Models;
+using HBOICTKeuzewijzer.Api.Models.OerRequirements;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
