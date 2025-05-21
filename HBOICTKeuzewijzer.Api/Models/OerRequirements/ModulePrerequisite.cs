@@ -43,96 +43,6 @@ namespace HBOICTKeuzewijzer.Api.Models.OerRequirements
         /// </summary>
         public List<ModuleLevelRequirementGroup> ModuleLevelRequirementGroups { get; set; }
     }
-
-    /// <summary>
-    /// Represents a credit (EC) requirement.
-    /// </summary>
-    public class EcRequirement
-    {
-        /// <summary>
-        /// The number of ECs required.
-        /// </summary>
-        public int RequiredAmount { get; set; }
-
-        /// <summary>
-        /// Indicates whether the ECs must be from the propaedeutic phase (P).
-        /// </summary>
-        public bool Propaedeutic { get; set; }
-    }
-
-    /// <summary>
-    /// Represents a prerequisite module and its optional EC requirement.
-    /// </summary>
-    public class ModuleRequirement
-    {
-        /// <summary>
-        /// The module that is required.
-        /// </summary>
-        public Guid RelevantModuleId { get; set; }
-
-        /// <summary>
-        /// Optional EC requirement associated with this module.
-        /// Null indicates that the student just needs to have participated.
-        /// </summary>
-        public EcRequirement? EcRequirement { get; set; }
-    }
-
-    /// <summary>
-    /// Represents a group of module prerequisites that must all be satisfied (AND).
-    /// If at least one <see cref="ModuleRequirementGroup"/> is satisfied, the overall requirement is met.
-    /// </summary>
-    public class ModuleRequirementGroup
-    {
-        /// <summary>
-        /// The list of module requirements that must all be met.
-        /// </summary>
-        public List<ModuleRequirement> ModuleRequirements { get; set; }
-    }
-
-    /// <summary>
-    /// Represents a group of module level requirements that must all be satisfied (AND).
-    /// If at least one <see cref="ModuleLevelRequirementGroup"/> is satisfied, the overall requirement is met.
-    /// </summary>
-    public class ModuleLevelRequirementGroup
-    {
-        /// <summary>
-        /// The list of level-based module requirements that must all be met.
-        /// </summary>
-        public List<ModuleLevelRequirement> ModuleLevelRequirements { get; set; }
-    }
-
-    /// <summary>
-    /// Specifies the semester in which a module is available.
-    /// </summary>
-    public enum SemesterConstraint
-    {
-        /// <summary>
-        /// Module can be followed in the first semester.
-        /// </summary>
-        First,
-
-        /// <summary>
-        /// Module can be followed in the second semester.
-        /// </summary>
-        Second
-    }
-
-    /// <summary>
-    /// Represents a requirement for a module of a specific level to have been followed or completed.
-    /// May also have an associated EC requirement.
-    /// </summary>
-    public class ModuleLevelRequirement
-    {
-        /// <summary>
-        /// The required level of the module (e.g., 1 = year 1, 2 = year 2/3).
-        /// </summary>
-        public int Level { get; set; }
-
-        /// <summary>
-        /// Optional EC requirement associated with the level requirement.
-        /// </summary>
-        public EcRequirement? EcRequirement { get; set; }
-    }
 }
 
 
@@ -154,26 +64,34 @@ class Test
 
         var examplePrerequisite = new ModulePrerequisite
         {
+            // P completed
             Propaedeutic = true,
+            // Needs to be done in the first semester
             SemesterConstraint = SemesterConstraint.First,
+            // Has credit requirements
             EcRequirements = new List<EcRequirement>
             {
+                // 50 credits from P
                 new EcRequirement
                 {
                     Propaedeutic = true,
                     RequiredAmount = 50
                 },
+                // And 120 in total including those from P
                 new EcRequirement
                 {
                     RequiredAmount = 120
                 }
             },
+            // Requires some modules before following this one
             ModuleRequirementGroups = new List<ModuleRequirementGroup>
             {
+                // Either this
                 new ModuleRequirementGroup
                 {
                     ModuleRequirements = new List<ModuleRequirement>
                     {
+                        // Requires to have received 30 credits from MDO module
                         new ModuleRequirement
                         {
                             RelevantModuleId = MdoModule.Id,
@@ -182,6 +100,7 @@ class Test
                                 RequiredAmount = 30
                             }
                         },
+                        // And requires to have received 30 credits from OOSD module
                         new ModuleRequirement
                         {
                             RelevantModuleId = OOSDModule.Id,
@@ -190,6 +109,7 @@ class Test
                                 RequiredAmount = 30
                             }
                         },
+                        // And requires to have received 30 credits from WebDev module
                         new ModuleRequirement
                         {
                             RelevantModuleId = WebDevModule.Id,
@@ -200,10 +120,12 @@ class Test
                         }
                     }
                 },
+                // Or this
                 new ModuleRequirementGroup
                 {
                     ModuleRequirements = new List<ModuleRequirement>
                     {
+                        // Requires to have received 30 credits from MDO module
                         new ModuleRequirement
                         {
                             RelevantModuleId = MdoModule.Id,
@@ -212,10 +134,12 @@ class Test
                                 RequiredAmount = 30
                             }
                         },
+                        // And requires to have participated in OOSD module, regardless of received credits
                         new ModuleRequirement
                         {
                             RelevantModuleId = OOSDModule.Id
                         },
+                        // And requires to have received 10 credits from QSD module
                         new ModuleRequirement
                         {
                             RelevantModuleId = QSDModule.Id,
@@ -227,30 +151,37 @@ class Test
                     }
                 }
             },
+            // Requires some modules of specific level before following this one
             ModuleLevelRequirementGroups = new List<ModuleLevelRequirementGroup>
             {
+                // Either this
                 new ModuleLevelRequirementGroup
                 {
                     ModuleLevelRequirements = new List<ModuleLevelRequirement>
                     {
+                        // Requires to have participated in a module of level 2
                         new ModuleLevelRequirement
                         {
                             Level = 2
                         },
+                        // And participated in a different module of level 2
                         new ModuleLevelRequirement
                         {
                             Level = 2
                         }
                     }
                 },
+                // Or this
                 new ModuleLevelRequirementGroup
                 {
                     ModuleLevelRequirements = new List<ModuleLevelRequirement>
                     {
+                        // Requires to have participated in a module of level 1
                         new ModuleLevelRequirement
                         {
                             Level = 1
                         },
+                        // And have received 10 credits in a module of level 1
                         new ModuleLevelRequirement
                         {
                             Level = 1,
@@ -259,6 +190,7 @@ class Test
                                 RequiredAmount = 10
                             }
                         },
+                        // And to have participated in a module of level 2
                         new ModuleLevelRequirement
                         {
                             Level = 2
