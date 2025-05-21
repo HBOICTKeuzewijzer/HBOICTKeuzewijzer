@@ -1,4 +1,5 @@
 ﻿using HBOICTKeuzewijzer.Api.Attributes;
+using HBOICTKeuzewijzer.Api.Dtos;
 using HBOICTKeuzewijzer.Api.Models;
 using HBOICTKeuzewijzer.Api.Repositories;
 using HBOICTKeuzewijzer.Api.Services;
@@ -38,14 +39,14 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 
         /// <summary>
         /// Retrieves a paginated list of students linked to a speficic SLB counselor.
-        /// Accesible only to administrators
+        /// Accessible only to administrators
         /// </summary>
         /// <param name="slbId">The ID of the SLB counselor.</param>
         /// <param name="request">Pagination parameters.</param>
         /// <returns>A paginated list of students.</returns>
         [HttpGet("{slbId:guid}/students")]
         [EnumAuthorize(Role.SystemAdmin)]
-        public async Task<ActionResult<PaginatedResult<ApplicationUser>>> GetStudentsForSlb(Guid slbId, [FromQuery] GetAllRequestQuery request)
+        public async Task<ActionResult<PaginatedResult<StudentDto>>> GetStudentsForSlb(Guid slbId, [FromQuery] GetAllRequestQuery request)
         {
             var result = await _slbRepo.GetStudentsBySlbAsync(slbId, request);
             return Ok(result);
@@ -59,7 +60,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         /// <returns>A paginated list of students.</returns>
         [HttpGet("myStudents")]
         [EnumAuthorize(Role.SLB)]
-        public async Task<ActionResult<PaginatedResult<ApplicationUser>>> GetStudents(
+        public async Task<ActionResult<PaginatedResult<StudentDto>>> GetStudents(
             [FromQuery] GetAllRequestQuery request)
         {
             var currentUser = await _userService.GetOrCreateUserAsync(User);
