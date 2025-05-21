@@ -1,7 +1,10 @@
 ﻿using HBOICTKeuzewijzer.Api.DAL;
 using HBOICTKeuzewijzer.Api.Models;
+using HBOICTKeuzewijzer.Api.Dtos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
+using System.Linq.Expressions;
+using System.Reflection;
 
 namespace HBOICTKeuzewijzer.Api.Repositories
 {
@@ -10,11 +13,28 @@ namespace HBOICTKeuzewijzer.Api.Repositories
         public SlbRepository(AppDbContext context) : base(context)
         {
         }
-        public async Task<IEnumerable<Slb>> GetAllWithUsersAsync()
+        public async Task<IEnumerable<SlbDto>> GetAllWithUsersAsync()
         {
             return await _dbSet
                 .Include(s => s.SlbApplicationUser)
                 .Include(s => s.StudentApplicationUser)
+                .GroupBy(s => s.SlbApplicationUser)
+                .Select(group => new SlbDto
+                {
+                    Id = group.Key.Id,
+                    DisplayName = group.Key.DisplayName,
+                    Email = group.Key.Email,
+                    Students = group
+                        .Select(s => new StudentDto
+                        {
+                            Id = s.StudentApplicationUser.Id,
+                            DisplayName = s.StudentApplicationUser.DisplayName,
+                            Email = s.StudentApplicationUser.Email,
+                            Code = s.StudentApplicationUser.Code,
+                            Cohort = s.StudentApplicationUser.Cohort,
+                            SlbId = s.SlbApplicationUserId
+                        }).ToList()
+                })
                 .ToListAsync();
         }
 
@@ -34,32 +54,79 @@ namespace HBOICTKeuzewijzer.Api.Repositories
                 .FirstOrDefaultAsync(s => s.SlbApplicationUserId == slbId);
         }
 
-        public async Task<PaginatedResult<ApplicationUser>> GetStudentsBySlbAsync(Guid slbId, int? page, int? pageSize)
+        public async Task<PaginatedResult<StudentDto>> GetStudentsBySlbAsync(Guid slbId, GetAllRequestQuery request)
         {
             var query = _dbSet
                 .Include(s => s.StudentApplicationUser)
                 .Where(s => s.SlbApplicationUserId == slbId)
                 .Select(s => s.StudentApplicationUser);
 
-            var totalCount = await query.CountAsync();
-
-            if (page.HasValue && pageSize.HasValue)
+            // Filtering
+            if (!string.IsNullOrWhiteSpace(request.Filter))
             {
-                query = query
-                    .Skip((page.Value - 1) * pageSize.Value)
-                    .Take(pageSize.Value);
+                query = query.Where(u =>
+                    EF.Functions.Like(u.DisplayName, $"%{request.Filter}%") ||
+                    EF.Functions.Like(u.Email, $"%{request.Filter}%"));
             }
 
-            var items = await query.ToListAsync();
+            // Sortering
+            if (!string.IsNullOrEmpty(request.SortColumn))
+            {
+                var propertyInfo = typeof(ApplicationUser).GetProperty(request.SortColumn,
+                    BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
 
-            return new PaginatedResult<ApplicationUser>
+                if (propertyInfo != null)
+                {
+                    var parameter = Expression.Parameter(typeof(ApplicationUser), "x");
+                    var property = Expression.Property(parameter, propertyInfo);
+                    var lambda = Expression.Lambda(property, parameter);
+
+                    var methodName = request.SortDirection?.ToLower() == "desc"
+                        ? "OrderByDescending"
+                        : "OrderBy";
+
+                    var resultExpression = Expression.Call(
+                        typeof(Queryable),
+                        methodName,
+                        new Type[] { typeof(ApplicationUser), propertyInfo.PropertyType },
+                        query.Expression,
+                        Expression.Quote(lambda));
+
+                    query = query.Provider.CreateQuery<ApplicationUser>(resultExpression);
+                }
+            }
+
+            // Count voordat de paginering gebeurt (wil natuurlijk bepalen hoeveel resultaten per pagina)
+            var totalCount = await query.CountAsync();
+
+            // Pagination
+            if (request.Page.HasValue && request.PageSize.HasValue)
+            {
+                query = query
+                    .Skip((request.Page.Value - 1) * request.PageSize.Value)
+                    .Take(request.PageSize.Value);
+            }
+
+            var items = await query
+                .Select(u => new StudentDto
+                {
+                    Id = u.Id,
+                    DisplayName = u.DisplayName,
+                    Email = u.Email,
+                    Code = u.Code,
+                    Cohort = u.Cohort
+                })
+        .ToListAsync();
+
+            return new PaginatedResult<StudentDto>
             {
                 Items = items,
                 TotalCount = totalCount,
-                Page = page ?? 1,
-                PageSize = pageSize ?? totalCount
+                Page = request.Page ?? 1,
+                PageSize = request.PageSize ?? totalCount
             };
         }
+
         public async Task<bool> RelationExistsAsync(Guid slbId, Guid studentId)
         {
             return await _dbSet.AnyAsync(s => s.SlbApplicationUserId == slbId && s.StudentApplicationUserId == studentId);
@@ -82,8 +149,8 @@ namespace HBOICTKeuzewijzer.Api.Repositories
                 StudentApplicationUserId = studentId
             };
 
-            await AddAsync(slbRelatie); 
-            await _context.SaveChangesAsync();  
+            await AddAsync(slbRelatie);
+            await _context.SaveChangesAsync();
         }
 
         public async Task RemoveSlbRelationAsync(Guid slbId, Guid studentId)
@@ -94,7 +161,7 @@ namespace HBOICTKeuzewijzer.Api.Repositories
                 throw new InvalidOperationException("Relatie niet gevonden.");
 
             await DeleteAsync(relatie.Id);
-            await _context.SaveChangesAsync(); 
+            await _context.SaveChangesAsync();
         }
     }
 }

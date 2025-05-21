@@ -5,7 +5,7 @@ VisualStudioVersion = 17.11.35312.102
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HBOICTKeuzewijzer.Api", "HBOICTKeuzewijzer.Api\HBOICTKeuzewijzer.Api.csproj", "{1503B259-7AB7-42CA-A888-EFA030466174}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HBOICTKeuzewijzer.Tests", "xUnitTest\HBOICTKeuzewijzer.Tests.csproj", "{72EBC8F0-AFD7-4B8C-A4FA-E30C05C803B0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HBOICTKeuzewijzer.Tests", "HBOICTKeuzewijzer.Tests\HBOICTKeuzewijzer.Tests.csproj", "{72EBC8F0-AFD7-4B8C-A4FA-E30C05C803B0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
