@@ -61,11 +61,6 @@ namespace HBOICTKeuzewijzer.Api.Repositories
             return await _dbSet.AnyAsync(e => EF.Property<Guid>(e, "Id") == id);
         }
 
-        public IQueryable<T> Queryable()
-        {
-            return _dbSet.AsQueryable();
-        }
-
         public async Task<IEnumerable<T>> GetAllIncludingAsync(params Expression<Func<T, object>>[] includes)
         {
             IQueryable<T> query = _dbSet;
