@@ -24,23 +24,11 @@ public class StudyRouteValidationService : IStudyRouteValidationService
     /// </remarks>
     public ValidationProblemDetails? ValidateRoute(StudyRoute routeToValidate)
     {
-        if (routeToValidate.Semesters is null) return null;
+        ArgumentNullException.ThrowIfNull(routeToValidate);
 
-        var validationProblems = new Dictionary<string, string[]>();
+        if (routeToValidate.Semesters is null || routeToValidate.Semesters.Count == 0) return null;
 
-        foreach (var semester in routeToValidate.Semesters)
-        {
-            if (semester.Module is null) continue;
-
-            var modulePrerequisite = GetParsedModulePrerequisite(semester.Module);
-
-            if (modulePrerequisite is null) continue;
-
-            // validate somehow :)
-            // if check fails add to validation problems
-        }
-
-        return validationProblems.Count > 0 ? new ValidationProblemDetails(validationProblems) : null;
+        return null;
     }
 
     private ModulePrerequisite? GetParsedModulePrerequisite(Module moduleToParse)
