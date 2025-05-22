@@ -42,6 +42,16 @@ namespace HBOICTKeuzewijzer.Api.Models.OerRequirements
         /// Within a group, all <see cref="ModuleLevelRequirement"/>s must be fulfilled (AND).
         /// </summary>
         public List<ModuleLevelRequirementGroup> ModuleLevelRequirementGroups { get; set; }
+
+        /// <summary>
+        /// Specifies in which school years a module is available. e.g. year 2, year 3
+        /// </summary>
+        public List<int> YearConstraints { get; set; }
+
+        /// <summary>
+        /// Specifies from which school year onward this module is available.
+        /// </summary>
+        public int AvailableFromYear { get; set; }
     }
 }
 
