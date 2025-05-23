@@ -2,8 +2,9 @@
 using HBOICTKeuzewijzer.Api.Models.OerRequirements;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using System.Drawing;
 
-namespace HBOICTKeuzewijzer.Api.Services;
+namespace HBOICTKeuzewijzer.Api.Services.StudyRouteValidation;
 
 public class StudyRouteValidationService : IStudyRouteValidationService
 {
@@ -14,8 +15,13 @@ public class StudyRouteValidationService : IStudyRouteValidationService
         _rules = new List<IStudyRouteValidationRule>
         {
             new PropaedeuticRule(),
-            // Add more rules here in future
+            new PropaedeuticRule()
         };
+    }
+
+    public StudyRouteValidationService(List<IStudyRouteValidationRule> rules)
+    {
+        _rules = rules;
     }
 
     /// <summary>
@@ -94,6 +100,16 @@ public abstract class StudyRouteValidationRuleBase : IStudyRouteValidationRule
         modulePrerequisite = JsonConvert.DeserializeObject<ModulePrerequisite>(semester.Module.PrerequisiteJson);
         return true;
     }
+
+    protected void AddError(string errorText, string key, Dictionary<string, List<string>> errors)
+    {
+        if (!errors.ContainsKey(key))
+        {
+            errors[key] = new List<string>();
+        }
+
+        errors[key].Add(errorText);
+    }
 }
 
 public class PropaedeuticRule : StudyRouteValidationRuleBase
@@ -102,6 +118,10 @@ public class PropaedeuticRule : StudyRouteValidationRuleBase
     {
         if (!GetParsedPrerequisite(currentSemester, out var modulePrerequisite)) return;
 
+        if (modulePrerequisite is null) return;
+
+        if (!modulePrerequisite.Propaedeutic) return;
+
         var pCount = previousSemesters
             .Where(s => s.Module is not null)
             .Select(s => s.Module!)
@@ -109,20 +129,24 @@ public class PropaedeuticRule : StudyRouteValidationRuleBase
 
         if (pCount == 2) return;
 
-        var key = currentSemester.Id.ToString();
-        if (!errors.ContainsKey(key))
-        {
-            errors[key] = new List<string>();
-        }
-
-        errors[key].Add($"Module: {currentSemester.Module!.Name} verwacht een voltooide propedeuse, minimaal 2 modules uit de P fase, {pCount} gevonden.");
+        AddError($"Module: {currentSemester.Module!.Name} verwacht een voltooide propedeuse, minimaal 2 modules uit de P fase, {pCount} gevonden.", currentSemester.Id.ToString(), errors);
     }
 }
 
 public class SemesterConstraintRule : StudyRouteValidationRuleBase
 {
-    public void Validate(Semester currentSemester, List<Semester> previousSemesters, Dictionary<string, List<string>> errors)
+    public override void Validate(Semester currentSemester, List<Semester> previousSemesters, Dictionary<string, List<string>> errors)
     {
+        if (!GetParsedPrerequisite(currentSemester, out var modulePrerequisite)) return;
 
+        if (modulePrerequisite is null) return;
+
+        var currentSemesterConstraint = currentSemester.Index % 2 == 0 ? SemesterConstraint.First : SemesterConstraint.Second;
+
+        if (modulePrerequisite.SemesterConstraint is not null &&
+            modulePrerequisite.SemesterConstraint != currentSemesterConstraint)
+        {
+            AddError($"Module: {currentSemester.Module!.Name} kan alleen plaatsvinden in semester {currentSemesterConstraint + 1}.", currentSemester.Id.ToString(), errors);
+        }
     }
 }

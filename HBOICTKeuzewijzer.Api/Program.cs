@@ -11,6 +11,7 @@ using Sustainsys.Saml2.AspNetCore2;
 using Sustainsys.Saml2.Metadata;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.DataProtection;
+using HBOICTKeuzewijzer.Api.Services.StudyRouteValidation;
 
 namespace HBOICTKeuzewijzer.Api
 {

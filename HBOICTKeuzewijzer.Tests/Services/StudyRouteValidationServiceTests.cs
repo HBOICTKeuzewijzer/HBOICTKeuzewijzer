@@ -5,6 +5,7 @@ using HBOICTKeuzewijzer.Api.Models.OerRequirements;
 using HBOICTKeuzewijzer.Api.Services;
 using Newtonsoft.Json;
 using System.Collections;
+using HBOICTKeuzewijzer.Api.Services.StudyRouteValidation;
 
 namespace HBOICTKeuzewijzer.Tests.Services
 {
@@ -105,7 +106,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
             }, 30));
             invalidRoute.Semesters.Add(faultySemester);
 
-            var sut = new StudyRouteValidationService();
+            var sut = new StudyRouteValidationService([new PropaedeuticRule()]);
 
             // Act
             var result = sut.ValidateRoute(invalidRoute);
@@ -154,7 +155,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
             }, 30));
             invalidRoute.Semesters.Add(faultySemester);
 
-            var sut = new StudyRouteValidationService();
+            var sut = new StudyRouteValidationService([new PropaedeuticRule()]);
 
             // Act
             var result = sut.ValidateRoute(invalidRoute);
@@ -197,7 +198,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
                 })
             }));
 
-            var sut = new StudyRouteValidationService();
+            var sut = new StudyRouteValidationService([new SemesterConstraintRule()]);
 
             // Act
             var result = sut.ValidateRoute(invalidRoute);
@@ -243,7 +244,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
             invalidRoute.Semesters.Add(faultySemesterOne);
             invalidRoute.Semesters.Add(faultySemesterTwo);
 
-            var sut = new StudyRouteValidationService();
+            var sut = new StudyRouteValidationService([new SemesterConstraintRule()]);
 
             // Act
             var result = sut.ValidateRoute(invalidRoute);
@@ -251,11 +252,15 @@ namespace HBOICTKeuzewijzer.Tests.Services
             // Assert
             result.Should().NotBeNull();
             result.Errors.Should().NotBeNull();
-            result.Errors.Count.Should().Be(1);
+            result.Errors.Count.Should().Be(2);
             result.Errors.Keys.Should().Contain(faultySemesterOne.Id.ToString());
+            result.Errors.Keys.Should().Contain(faultySemesterTwo.Id.ToString());
             result.Errors[faultySemesterOne.Id.ToString()].Length.Should().Be(1);
             result.Errors[faultySemesterOne.Id.ToString()][0].Should()
                 .Be($"Module: {faultySemesterOne.Module!.Name} kan alleen plaatsvinden in semester {SemesterConstraint.First + 1}.");
+            result.Errors[faultySemesterTwo.Id.ToString()].Length.Should().Be(1);
+            result.Errors[faultySemesterTwo.Id.ToString()][0].Should()
+                .Be($"Module: {faultySemesterTwo.Module!.Name} kan alleen plaatsvinden in semester {SemesterConstraint.Second + 1}.");
         }
 
         [Theory]
