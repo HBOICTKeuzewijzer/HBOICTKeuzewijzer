@@ -72,6 +72,13 @@ namespace HBOICTKeuzewijzer.Tests.Services
 
             sut.ValidateRoute(route).Should().BeNull();
         }
+
+        [Theory]
+        [ClassData(typeof(ValidStudyRouteData))]
+        public void Test(StudyRoute studyRoute)
+        {
+
+        }
     }
 }
 
@@ -269,6 +276,7 @@ public class TestModules
             {
                 YearConstraints = [1]
             }),
+            IsPropaedeutic = true,
             ECs = 30,
             Level = 1,
             Locked = true,
@@ -292,6 +300,7 @@ public class TestModules
                     }
                 ]
             }),
+            IsPropaedeutic = true,
             ECs = 30,
             Level = 1
         });

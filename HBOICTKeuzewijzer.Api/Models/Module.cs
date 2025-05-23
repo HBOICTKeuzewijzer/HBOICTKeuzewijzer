@@ -33,6 +33,9 @@ namespace HBOICTKeuzewijzer.Api.Models
 
         public int? LockedSemester { get; set; }
 
+        [Required]
+        public bool IsPropaedeutic { get; set; }
+
         [ForeignKey(nameof(CategoryId))]
         public Category? Category { get; set; }
 

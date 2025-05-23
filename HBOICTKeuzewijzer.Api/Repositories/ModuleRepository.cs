@@ -12,7 +12,7 @@ namespace HBOICTKeuzewijzer.Api.Repositories
 
         public async Task FillWithRequiredModules(StudyRoute studyRoute)
         {
-            var requiredModules = await Queryable().Where(m => m.Required).ToListAsync();
+            var requiredModules = await Queryable().Where(m => m.Locked).ToListAsync();
 
             if (studyRoute.Semesters is null)
             {
@@ -23,7 +23,7 @@ namespace HBOICTKeuzewijzer.Api.Repositories
 
             foreach (var module in requiredModules)
             {
-                var requiredSemester = module.RequiredSemester ?? 0;
+                var requiredSemester = module.LockedSemester ?? 0;
 
                 semesters[requiredSemester].Module = module;
             }
