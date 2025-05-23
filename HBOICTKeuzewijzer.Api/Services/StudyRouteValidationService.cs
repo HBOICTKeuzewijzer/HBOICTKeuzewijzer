@@ -7,6 +7,17 @@ namespace HBOICTKeuzewijzer.Api.Services;
 
 public class StudyRouteValidationService : IStudyRouteValidationService
 {
+    private readonly List<IStudyRouteValidationRule> _rules;
+
+    public StudyRouteValidationService()
+    {
+        _rules = new List<IStudyRouteValidationRule>
+        {
+            new PropaedeuticRule(),
+            // Add more rules here in future
+        };
+    }
+
     /// <summary>
     /// Validates a given <see cref="StudyRoute"/> instance against predefined rules set by Windesheim,
     /// including module prerequisites, EC requirements, semester constraints, and level requirements.
@@ -26,20 +37,92 @@ public class StudyRouteValidationService : IStudyRouteValidationService
     {
         ArgumentNullException.ThrowIfNull(routeToValidate);
 
-        if (routeToValidate.Semesters is null || routeToValidate.Semesters.Count == 0) return null;
+        if (routeToValidate.Semesters is null || routeToValidate.Semesters.Count == 0)
+            return null;
+
+        var validationResult = new ValidationProblemDetails
+        {
+            Title = "One or more validation errors occurred.",
+            Status = 400,
+            Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1"
+        };
+
+        var errors = new Dictionary<string, List<string>>();
+        var previousSemesters = new List<Semester>();
+
+        foreach (var semester in routeToValidate.Semesters)
+        {
+            foreach (var rule in _rules)
+            {
+                rule.Validate(semester, previousSemesters, errors);
+            }
+
+            previousSemesters.Add(semester);
+        }
+
+        if (errors.Count > 0)
+        {
+            foreach (var kvp in errors)
+            {
+                validationResult.Errors[kvp.Key] = kvp.Value.ToArray();
+            }
+
+            return validationResult;
+        }
 
         return null;
     }
+}
 
-    private ModulePrerequisite? GetParsedModulePrerequisite(Module moduleToParse)
+public interface IStudyRouteValidationRule
+{
+    void Validate(Semester currentSemester, List<Semester> previousSemesters, Dictionary<string, List<string>> errors);
+}
+
+public abstract class StudyRouteValidationRuleBase : IStudyRouteValidationRule
+{
+    public abstract void Validate(Semester currentSemester, List<Semester> previousSemesters, Dictionary<string, List<string>> errors);
+
+    protected bool GetParsedPrerequisite(Semester semester, out ModulePrerequisite? modulePrerequisite)
     {
-        var prerequisiteJson = moduleToParse.PrerequisiteJson;
-
-        if (prerequisiteJson == null)
+        if (semester.Module is null || string.IsNullOrEmpty(semester.Module.PrerequisiteJson))
         {
-            return null;
+            modulePrerequisite = null;
+            return false;
         }
 
-        return JsonConvert.DeserializeObject<ModulePrerequisite>(prerequisiteJson);
+        modulePrerequisite = JsonConvert.DeserializeObject<ModulePrerequisite>(semester.Module.PrerequisiteJson);
+        return true;
+    }
+}
+
+public class PropaedeuticRule : StudyRouteValidationRuleBase
+{
+    public override void Validate(Semester currentSemester, List<Semester> previousSemesters, Dictionary<string, List<string>> errors)
+    {
+        if (!GetParsedPrerequisite(currentSemester, out var modulePrerequisite)) return;
+
+        var pCount = previousSemesters
+            .Where(s => s.Module is not null)
+            .Select(s => s.Module!)
+            .Count(m => m.IsPropaedeutic);
+
+        if (pCount == 2) return;
+
+        var key = currentSemester.Id.ToString();
+        if (!errors.ContainsKey(key))
+        {
+            errors[key] = new List<string>();
+        }
+
+        errors[key].Add($"Module: {currentSemester.Module!.Name} verwacht een voltooide propedeuse, minimaal 2 modules uit de P fase, {pCount} gevonden.");
+    }
+}
+
+public class SemesterConstraintRule : StudyRouteValidationRuleBase
+{
+    public void Validate(Semester currentSemester, List<Semester> previousSemesters, Dictionary<string, List<string>> errors)
+    {
+
     }
 }
