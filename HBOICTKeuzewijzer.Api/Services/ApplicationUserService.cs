@@ -44,15 +44,6 @@ namespace HBOICTKeuzewijzer.Api.Services
             return user;
         }
 
-        public async Task<ApplicationUser?> GetByPrincipal(ClaimsPrincipal principal)
-        {
-            var externalId = GetExternalId(principal);
-
-            return await appDbContext.ApplicationUsers
-                .Include(u => u.ApplicationUserRoles)
-                .FirstOrDefaultAsync(u => u.ExternalId == externalId);
-        }
-
         private static string GetExternalId(ClaimsPrincipal principal)
         {
             var id = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -113,8 +104,6 @@ namespace HBOICTKeuzewijzer.Api.Services
             }
         }
 
-    }
-
         public async Task<ApplicationUser?> GetByPrincipal(ClaimsPrincipal principal)
         {
             var externalId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -137,9 +126,5 @@ namespace HBOICTKeuzewijzer.Api.Services
                 .Include(u => u.ApplicationUserRoles)
                 .FirstOrDefaultAsync(u => u.Id == id);
         }
-
-
-
-
     }
 }
