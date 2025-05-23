@@ -294,6 +294,38 @@ namespace HBOICTKeuzewijzer.Tests.Services
         }
         // hier ga ik werken aan YearConstraints and available from year!!!!!!!!!!
 
+        [Fact]
+        public void ValidateYearconstraint_ReturnValidationError_Whenyearnotmeettherequirements()
+        {
+            var semester = TestHelpers.CreateSemester(0, new Module
+            {
+                Name = "Test module met year constraint",
+                PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
+                {
+                    YearConstraints = new List<int> { 2 }, // Alleen toegestaan in jaar 2
+                    AvailableFromYear = 2
+                })
+            });
+
+            var route = new StudyRoute
+            {
+                Semesters = new List<Semester> { semester }
+            };
+
+            var sut = new StudyRouteValidationService(new List<IStudyRouteValidationRule>
+            {
+                new YearConstraintRule()
+            });
+
+            var result = sut.ValidateRoute(route);
+
+            result.Should().NotBeNull();
+            result.Errors.Should().ContainKey(semester.Id.ToString());
+            result.Errors[semester.Id.ToString()].Should().Contain(m => m.Contains("mag alleen gevolgd worden in jaar"));
+            result.Errors[semester.Id.ToString()].Should().Contain(m => m.Contains("beschikbaar vanaf jaar"));
+        }
+
+
         [Theory]
         [ClassData(typeof(ValidStudyRouteData))]
         public void ValidateStudyRoute_ReturnNull_WithValidStudyRoutes(StudyRoute studyRoute)
