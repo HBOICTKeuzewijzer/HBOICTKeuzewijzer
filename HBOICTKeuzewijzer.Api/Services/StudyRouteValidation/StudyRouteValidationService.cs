@@ -122,14 +122,21 @@ public class PropaedeuticRule : StudyRouteValidationRuleBase
 
         if (!modulePrerequisite.Propaedeutic) return;
 
-        var pCount = previousSemesters
+        var pSemesters = previousSemesters
             .Where(s => s.Module is not null)
-            .Select(s => s.Module!)
-            .Count(m => m.IsPropaedeutic);
+            .Where(s => s.Module!.IsPropaedeutic)
+            .ToList();
 
-        if (pCount == 2) return;
+        if (pSemesters.Count() < 2)
+        {
+            AddError($"Module: {currentSemester.Module!.Name} verwacht een voltooide propedeuse, minimaal 2 modules uit de P fase, {pSemesters.Count()} gevonden.", currentSemester.Id.ToString(), errors);
+        }
 
-        AddError($"Module: {currentSemester.Module!.Name} verwacht een voltooide propedeuse, minimaal 2 modules uit de P fase, {pCount} gevonden.", currentSemester.Id.ToString(), errors);
+        var ecSum = pSemesters.Sum(s => s.AcquiredECs);
+        if (ecSum < 60)
+        {
+            AddError($"Module: {currentSemester.Module!.Name} verwacht een voltooide propedeuse, minimaal 60 ec's behaald in de P fase, huidige ec's {ecSum}", currentSemester.Id.ToString(), errors);
+        }
     }
 }
 
@@ -148,5 +155,13 @@ public class SemesterConstraintRule : StudyRouteValidationRuleBase
         {
             AddError($"Module: {currentSemester.Module!.Name} kan alleen plaatsvinden in semester {currentSemesterConstraint + 1}.", currentSemester.Id.ToString(), errors);
         }
+    }
+}
+
+public class EcRequirementRule : StudyRouteValidationRuleBase
+{
+    public override void Validate(Semester currentSemester, List<Semester> previousSemesters, Dictionary<string, List<string>> errors)
+    {
+        throw new NotImplementedException();
     }
 }

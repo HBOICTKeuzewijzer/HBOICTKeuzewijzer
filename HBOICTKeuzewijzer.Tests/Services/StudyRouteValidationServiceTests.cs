@@ -6,6 +6,7 @@ using HBOICTKeuzewijzer.Api.Services;
 using Newtonsoft.Json;
 using System.Collections;
 using HBOICTKeuzewijzer.Api.Services.StudyRouteValidation;
+using System;
 
 namespace HBOICTKeuzewijzer.Tests.Services
 {
@@ -64,20 +65,6 @@ namespace HBOICTKeuzewijzer.Tests.Services
         }
 
         [Fact]
-        public void ValidateRoute_RetursNull_WhenGivenValidRoute()
-        {
-            var semesters = _fixture.CreateMany<Semester>(8).ToList();
-
-            var route = _fixture.Build<StudyRoute>()
-                .With(r => r.Semesters, semesters)
-                .Create();
-
-            var sut = new StudyRouteValidationService();
-
-            sut.ValidateRoute(route).Should().BeNull();
-        }
-
-        [Fact]
         public void ValidateRoute_ReturnValidationError_WhenRouteOnlyContainsOnePModule()
         {
             // Arrange
@@ -94,7 +81,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
                 {
                     Propaedeutic = true
                 })
-            }, 30);
+            });
 
             invalidRoute.Semesters = new List<Semester>();
             invalidRoute.Semesters.Add(TestHelpers.CreateSemester(0, _testModules.BedrijfsProcessenDynamischeWebapps, 30));
@@ -103,22 +90,24 @@ namespace HBOICTKeuzewijzer.Tests.Services
                 ECs = 30,
                 Level = 1,
                 Name = "Test module 1"
-            }, 30));
+            }));
             invalidRoute.Semesters.Add(faultySemester);
 
             var sut = new StudyRouteValidationService([new PropaedeuticRule()]);
 
             // Act
             var result = sut.ValidateRoute(invalidRoute);
-            var t = result.Errors[faultySemester.Id.ToString()][0];
+
             // Assert
             result.Should().NotBeNull();
             result.Errors.Should().NotBeNull();
             result.Errors.Count.Should().Be(1);
             result.Errors.Keys.Should().Contain(faultySemester.Id.ToString());
-            result.Errors[faultySemester.Id.ToString()].Length.Should().Be(1);
+            result.Errors[faultySemester.Id.ToString()].Length.Should().Be(2);
             result.Errors[faultySemester.Id.ToString()][0].Should()
-                .Be($"Requires exactly 2 completed propaedeutic modules, but found 1.");
+                .Be($"Module: {faultySemester.Module!.Name} verwacht een voltooide propedeuse, minimaal 2 modules uit de P fase, 1 gevonden.");
+            result.Errors[faultySemester.Id.ToString()][1].Should()
+                .Be($"Module: {faultySemester.Module!.Name} verwacht een voltooide propedeuse, minimaal 60 ec's behaald in de P fase, huidige ec's 30");
         }
 
         [Fact]
@@ -138,7 +127,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
                 {
                     Propaedeutic = true
                 })
-            }, 30);
+            });
 
             invalidRoute.Semesters = new List<Semester>();
             invalidRoute.Semesters.Add(TestHelpers.CreateSemester(0, new Module
@@ -146,13 +135,13 @@ namespace HBOICTKeuzewijzer.Tests.Services
                 ECs = 30,
                 Level = 1,
                 Name = "Test module"
-            }, 30));
+            }));
             invalidRoute.Semesters.Add(TestHelpers.CreateSemester(1, new Module
             {
                 ECs = 30,
                 Level = 1,
                 Name = "Test module"
-            }, 30));
+            }));
             invalidRoute.Semesters.Add(faultySemester);
 
             var sut = new StudyRouteValidationService([new PropaedeuticRule()]);
@@ -165,9 +154,11 @@ namespace HBOICTKeuzewijzer.Tests.Services
             result.Errors.Should().NotBeNull();
             result.Errors.Count.Should().Be(1);
             result.Errors.Keys.Should().Contain(faultySemester.Id.ToString());
-            result.Errors[faultySemester.Id.ToString()].Length.Should().Be(1);
+            result.Errors[faultySemester.Id.ToString()].Length.Should().Be(2);
             result.Errors[faultySemester.Id.ToString()][0].Should()
                 .Be($"Module: {faultySemester.Module!.Name} verwacht een voltooide propedeuse, minimaal 2 modules uit de P fase, 0 gevonden.");
+            result.Errors[faultySemester.Id.ToString()][1].Should()
+                .Be($"Module: {faultySemester.Module!.Name} verwacht een voltooide propedeuse, minimaal 60 ec's behaald in de P fase, huidige ec's 0");
         }
 
         [Fact]
@@ -263,6 +254,44 @@ namespace HBOICTKeuzewijzer.Tests.Services
                 .Be($"Module: {faultySemesterTwo.Module!.Name} kan alleen plaatsvinden in semester {SemesterConstraint.Second + 1}.");
         }
 
+        [Fact]
+        public void ValidateRoute_ReturnValidationError_WhenRouteDoesNotMeetEcRequirement()
+        {
+            // Arrange
+            var invalidRoute = _fixture.Build<StudyRoute>()
+                .Without(s => s.ApplicationUser)
+                .Without(s => s.Semesters)
+                .Create();
+
+            var faultySemesterOne = TestHelpers.CreateSemester(0, new Module
+            {
+                Name = "Test module",
+                PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
+                {
+                    EcRequirements = new List<EcRequirement>
+                    {
+                        new EcRequirement
+                        {
+                            RequiredAmount = 60
+                        }
+                    }
+                })
+            });
+
+            invalidRoute.Semesters = new List<Semester>();
+            invalidRoute.Semesters.Add(TestHelpers.CreateSemester(0, _testModules.BedrijfsProcessenDynamischeWebapps));
+            invalidRoute.Semesters.Add(TestHelpers.CreateSemester(1, _testModules.BeherenVanEenVerandertraject, 10));
+            invalidRoute.Semesters.Add(faultySemesterOne);
+
+            // niet voldaan aan 50ec requirement
+            // niet voldaan aan 50ec requirement uit de p fase
+
+
+            var sut = new StudyRouteValidationService([new EcRequirementRule()]);
+
+            // Act
+            var result = sut.ValidateRoute(invalidRoute);
+        }
         // hier ga ik werken aan YearConstraints and available from year!!!!!!!!!!
 
         [Theory]
@@ -317,13 +346,13 @@ public class ValidStudyRouteData : IEnumerable<object[]>
                 Semesters = new List<Semester>
                 {
                     TestHelpers.CreateSemester(0, _testModules.BedrijfsProcessenDynamischeWebapps),
-                    TestHelpers.CreateSemester(1, _testModules.BeherenVanEenVerandertraject, 20),
-                    TestHelpers.CreateSemester(2, _testModules.OoSoftwareDesignDevelopment, 20),
-                    TestHelpers.CreateSemester(3, _testModules.WebDevelopment, 20),
-                    TestHelpers.CreateSemester(4, _testModules.QualitySoftwareDevelopment, 20),
-                    TestHelpers.CreateSemester(5, _testModules.MultidisciplinaireOpdracht, 20),
-                    TestHelpers.CreateSemester(6, _testModules.DataScience, 20),
-                    TestHelpers.CreateSemester(7, _testModules.AfstuderenSE, 20),
+                    TestHelpers.CreateSemester(1, _testModules.BeherenVanEenVerandertraject),
+                    TestHelpers.CreateSemester(2, _testModules.OoSoftwareDesignDevelopment),
+                    TestHelpers.CreateSemester(3, _testModules.WebDevelopment),
+                    TestHelpers.CreateSemester(4, _testModules.QualitySoftwareDevelopment),
+                    TestHelpers.CreateSemester(5, _testModules.MultidisciplinaireOpdracht),
+                    TestHelpers.CreateSemester(6, _testModules.DataScience),
+                    TestHelpers.CreateSemester(7, _testModules.AfstuderenSE),
                 }
             }
         };
@@ -336,13 +365,13 @@ public class ValidStudyRouteData : IEnumerable<object[]>
                 Semesters = new List<Semester>
                 {
                     TestHelpers.CreateSemester(0, _testModules.BedrijfsProcessenDynamischeWebapps),
-                    TestHelpers.CreateSemester(1, _testModules.BeherenVanEenVerandertraject, 20),
-                    TestHelpers.CreateSemester(2, _testModules.OoSoftwareDesignDevelopment, 20),
-                    TestHelpers.CreateSemester(3, _testModules.WebDevelopment, 20),
-                    TestHelpers.CreateSemester(4, _testModules.ManagementOfIt, 20),
-                    TestHelpers.CreateSemester(5, _testModules.Stage, 20),
-                    TestHelpers.CreateSemester(6, _testModules.MultidisciplinaireOpdracht, 20),
-                    TestHelpers.CreateSemester(7, _testModules.AfstuderenSE, 20),
+                    TestHelpers.CreateSemester(1, _testModules.BeherenVanEenVerandertraject),
+                    TestHelpers.CreateSemester(2, _testModules.OoSoftwareDesignDevelopment),
+                    TestHelpers.CreateSemester(3, _testModules.WebDevelopment),
+                    TestHelpers.CreateSemester(4, _testModules.ManagementOfIt),
+                    TestHelpers.CreateSemester(5, _testModules.Stage),
+                    TestHelpers.CreateSemester(6, _testModules.MultidisciplinaireOpdracht),
+                    TestHelpers.CreateSemester(7, _testModules.AfstuderenSE),
                 }
             }
         };
@@ -355,13 +384,13 @@ public class ValidStudyRouteData : IEnumerable<object[]>
                 Semesters = new List<Semester>
                 {
                     TestHelpers.CreateSemester(0, _testModules.BedrijfsProcessenDynamischeWebapps),
-                    TestHelpers.CreateSemester(1, _testModules.BeherenVanEenVerandertraject, 20),
-                    TestHelpers.CreateSemester(2, _testModules.HybridCloudInfrastructure, 20),
-                    TestHelpers.CreateSemester(3, _testModules.CloudArchitectureAutomation, 20),
-                    TestHelpers.CreateSemester(4, _testModules.OoSoftwareDesignDevelopment, 20),
-                    TestHelpers.CreateSemester(5, _testModules.MultidisciplinaireOpdracht, 20),
-                    TestHelpers.CreateSemester(6, _testModules.Stage, 20),
-                    TestHelpers.CreateSemester(7, _testModules.AfstuderenIDS, 20),
+                    TestHelpers.CreateSemester(1, _testModules.BeherenVanEenVerandertraject),
+                    TestHelpers.CreateSemester(2, _testModules.HybridCloudInfrastructure),
+                    TestHelpers.CreateSemester(3, _testModules.CloudArchitectureAutomation),
+                    TestHelpers.CreateSemester(4, _testModules.OoSoftwareDesignDevelopment),
+                    TestHelpers.CreateSemester(5, _testModules.MultidisciplinaireOpdracht),
+                    TestHelpers.CreateSemester(6, _testModules.Stage),
+                    TestHelpers.CreateSemester(7, _testModules.AfstuderenIDS),
                 }
             }
         };
@@ -374,13 +403,13 @@ public class ValidStudyRouteData : IEnumerable<object[]>
                 Semesters = new List<Semester>
                 {
                     TestHelpers.CreateSemester(0, _testModules.BedrijfsProcessenDynamischeWebapps),
-                    TestHelpers.CreateSemester(1, _testModules.BeherenVanEenVerandertraject, 20),
-                    TestHelpers.CreateSemester(2, _testModules.HybridCloudInfrastructure, 20),
-                    TestHelpers.CreateSemester(3, _testModules.CloudArchitectureAutomation, 20),
-                    TestHelpers.CreateSemester(4, _testModules.AppliedItSecurity, 20),
-                    TestHelpers.CreateSemester(5, _testModules.MultidisciplinaireOpdracht, 20),
-                    TestHelpers.CreateSemester(6, _testModules.Stage, 20),
-                    TestHelpers.CreateSemester(7, _testModules.AfstuderenIDS, 20),
+                    TestHelpers.CreateSemester(1, _testModules.BeherenVanEenVerandertraject),
+                    TestHelpers.CreateSemester(2, _testModules.HybridCloudInfrastructure),
+                    TestHelpers.CreateSemester(3, _testModules.CloudArchitectureAutomation),
+                    TestHelpers.CreateSemester(4, _testModules.AppliedItSecurity),
+                    TestHelpers.CreateSemester(5, _testModules.MultidisciplinaireOpdracht),
+                    TestHelpers.CreateSemester(6, _testModules.Stage),
+                    TestHelpers.CreateSemester(7, _testModules.AfstuderenIDS),
                 }
             }
         };
@@ -393,13 +422,13 @@ public class ValidStudyRouteData : IEnumerable<object[]>
                 Semesters = new List<Semester>
                 {
                     TestHelpers.CreateSemester(0, _testModules.BedrijfsProcessenDynamischeWebapps),
-                    TestHelpers.CreateSemester(1, _testModules.BeherenVanEenVerandertraject, 20),
-                    TestHelpers.CreateSemester(2, _testModules.BusinessProcessManagement, 20),
-                    TestHelpers.CreateSemester(3, _testModules.DataScience, 20),
-                    TestHelpers.CreateSemester(4, _testModules.ManagementOfIt, 20),
-                    TestHelpers.CreateSemester(5, _testModules.CloudArchitectureAutomation, 20),
-                    TestHelpers.CreateSemester(6, _testModules.MultidisciplinaireOpdracht, 20),
-                    TestHelpers.CreateSemester(7, _testModules.AfstuderenBIM, 20),
+                    TestHelpers.CreateSemester(1, _testModules.BeherenVanEenVerandertraject),
+                    TestHelpers.CreateSemester(2, _testModules.BusinessProcessManagement),
+                    TestHelpers.CreateSemester(3, _testModules.DataScience),
+                    TestHelpers.CreateSemester(4, _testModules.ManagementOfIt),
+                    TestHelpers.CreateSemester(5, _testModules.CloudArchitectureAutomation),
+                    TestHelpers.CreateSemester(6, _testModules.MultidisciplinaireOpdracht),
+                    TestHelpers.CreateSemester(7, _testModules.AfstuderenBIM),
                 }
             }
         };
@@ -412,13 +441,13 @@ public class ValidStudyRouteData : IEnumerable<object[]>
                 Semesters = new List<Semester>
                 {
                     TestHelpers.CreateSemester(0, _testModules.BedrijfsProcessenDynamischeWebapps),
-                    TestHelpers.CreateSemester(1, _testModules.BeherenVanEenVerandertraject, 20),
-                    TestHelpers.CreateSemester(2, _testModules.BusinessProcessManagement, 20),
-                    TestHelpers.CreateSemester(3, _testModules.DataScience, 20),
-                    TestHelpers.CreateSemester(4, _testModules.AppliedItSecurity, 20),
-                    TestHelpers.CreateSemester(5, _testModules.MultidisciplinaireOpdracht, 20),
-                    TestHelpers.CreateSemester(6, _testModules.Stage, 20),
-                    TestHelpers.CreateSemester(7, _testModules.AfstuderenBIM, 20),
+                    TestHelpers.CreateSemester(1, _testModules.BeherenVanEenVerandertraject),
+                    TestHelpers.CreateSemester(2, _testModules.BusinessProcessManagement),
+                    TestHelpers.CreateSemester(3, _testModules.DataScience),
+                    TestHelpers.CreateSemester(4, _testModules.AppliedItSecurity),
+                    TestHelpers.CreateSemester(5, _testModules.MultidisciplinaireOpdracht),
+                    TestHelpers.CreateSemester(6, _testModules.Stage),
+                    TestHelpers.CreateSemester(7, _testModules.AfstuderenBIM),
                 }
             }
         };
