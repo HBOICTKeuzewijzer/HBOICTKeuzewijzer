@@ -4,7 +4,6 @@ using HBOICTKeuzewijzer.Api.Repositories;
 using HBOICTKeuzewijzer.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization;
 
 namespace HBOICTKeuzewijzer.Api.Controllers
 {
@@ -23,11 +22,19 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         }
 
         // GET: api/Module
-        [HttpGet]
-        public async Task<ActionResult<PaginatedResult<Module>>> GetModules(
+        [HttpGet("paged")]
+        public async Task<ActionResult<PaginatedResult<Module>>> GetPagedModules(
             [FromQuery] GetAllRequestQuery request)
         {
             var result = await _moduleRepo.GetPaginatedAsync(request, m => m.Category);
+            return Ok(result);
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<List<Module>>> GetModules()
+        {
+            var result = await _moduleRepo.GetAllIncludingAsync(m => m.Category);
+
             return Ok(result);
         }
 
@@ -55,7 +62,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 
         // PUT: api/Module/5
         [HttpPut("{id}")]
-        [AllowAnonymous]
+        [EnumAuthorize(Role.ModuleAdmin, Role.SystemAdmin)]
         public async Task<IActionResult> PutModule(Guid id, Module module)
         {
             if (id != module.Id)
@@ -68,7 +75,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
                 return NotFound();
             }
 
-            // var user = await _userService.GetOrCreateUserAsync(User);
+            var user = await _userService.GetOrCreateUserAsync(User);
 
             try
             {
@@ -89,7 +96,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 
         // POST: api/Module
         [HttpPost]
-        [AllowAnonymous]
+        [EnumAuthorize(Role.ModuleAdmin, Role.SystemAdmin)]
         public async Task<ActionResult<Module>> PostModule(Module module)
         {
             if (!ModelState.IsValid)
@@ -97,7 +104,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
                 return BadRequest(ModelState);
             }
 
-            // var user = await _userService.GetOrCreateUserAsync(User);
+            var user = await _userService.GetOrCreateUserAsync(User);
 
             await _moduleRepo.AddAsync(module);
 
@@ -106,7 +113,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 
         // DELETE: api/Module/5
         [HttpDelete("{id}")]
-        [AllowAnonymous]
+        [EnumAuthorize(Role.SystemAdmin, Role.ModuleAdmin)]
         public async Task<IActionResult> DeleteModule(Guid id)
         {
             var module = await _moduleRepo.GetByIdAsync(id);
@@ -116,7 +123,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             }
 
             await _moduleRepo.DeleteAsync(id);
-            Console.WriteLine($"Module met ID {id} is verwijderd.");
+
             return NoContent();
         }
     }
