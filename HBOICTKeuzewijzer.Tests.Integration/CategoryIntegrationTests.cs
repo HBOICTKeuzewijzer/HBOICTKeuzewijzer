@@ -3,7 +3,8 @@ using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
 using HBOICTKeuzewijzer.Tests.Integration.Shared;
-using System.Data;
+using Azure;
+using Microsoft.EntityFrameworkCore;
 
 namespace HBOICTKeuzewijzer.Tests.Integration;
 
@@ -48,6 +49,57 @@ public class CategoryIntegrationTests
         saved!.AccentColor.Should().Be("#fff");
         saved!.Position.Should().Be(1);
         saved!.PrimaryColor.Should().Be("#aaa");
+    }
+
+    [Fact]
+    public async Task PostCategory_RespondsWithUnauthorized_WhenNotAuthenticated()
+    {
+        using var factory = new TestAppFactory();
+
+        var category = new Category
+        {
+            AccentColor = "#aaa",
+            PrimaryColor = "#fff",
+            Position = 1,
+            Value = "Test category updated"
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Post, $"/Category")
+        {
+            Content = JsonContent.Create(category)
+        };
+
+        var response = await factory.Client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Theory]
+    [InlineData("User")]
+    [InlineData("Student")]
+    [InlineData("SLB")]
+    public async Task PostCategory_RespondsWithForbidden_WhenRolesAreNotCorrect(string role)
+    {
+        using var factory = new TestAppFactory();
+
+        var category = new Category
+        {
+            AccentColor = "#aaa",
+            PrimaryColor = "#fff",
+            Position = 1,
+            Value = "Test category updated"
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Post, $"/Category")
+        {
+            Content = JsonContent.Create(category)
+        };
+        request.Headers.Add("X-Test-Auth", "true");
+        request.Headers.Add("X-Test-Role", role);
+
+        var response = await factory.Client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
     [Theory]
@@ -182,5 +234,210 @@ public class CategoryIntegrationTests
         var response = await factory.Client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task GetCategory_ReturnsCategoryBasedOnId()
+    {
+        using var factory = new TestAppFactory();
+
+        var categoryId = Guid.NewGuid();
+
+        var category = new Category
+        {
+            Id = categoryId,
+            AccentColor = "#aaa",
+            PrimaryColor = "#fff",
+            Position = 1,
+            Value = "Test category"
+        };
+
+        await SeedHelper.SeedAsync(factory.Services, category);
+
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/Category/{category.Id}")
+        {
+            Content = JsonContent.Create(category)
+        };
+
+        var response = await factory.Client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK); 
+        
+        var returnedCategory = await response.Content.ReadFromJsonAsync<Category>();
+
+        returnedCategory.Should().NotBeNull();
+        returnedCategory!.Id.Should().Be(category.Id);
+        returnedCategory.Value.Should().Be(category.Value);
+        returnedCategory.AccentColor.Should().Be(category.AccentColor);
+        returnedCategory.PrimaryColor.Should().Be(category.PrimaryColor);
+        returnedCategory.Position.Should().Be(category.Position);
+    }
+
+    [Fact]
+    public async Task GetCategory_RespondsWithNotFound_WhenCategoryIdIsUnknown()
+    {
+        using var factory = new TestAppFactory();
+
+        var categoryId = Guid.NewGuid();
+
+        var category = new Category
+        {
+            Id = categoryId,
+            AccentColor = "#aaa",
+            PrimaryColor = "#fff",
+            Position = 1,
+            Value = "Test category"
+        };
+
+        await SeedHelper.SeedAsync(factory.Services, category);
+
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/Category/{Guid.NewGuid()}")
+        {
+            Content = JsonContent.Create(category)
+        };
+
+        var response = await factory.Client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetCategories_ReturnsAllCategoriesOrderedByPosition()
+    {
+        using var factory = new TestAppFactory();
+
+        var categoryOne = new Category
+        {
+            Id = Guid.NewGuid(),
+            AccentColor = "#aaa",
+            PrimaryColor = "#fff",
+            Position = 1,
+            Value = "Test category"
+        };
+
+        var categoryTwo = new Category
+        {
+            Id = Guid.NewGuid(),
+            AccentColor = "#aaa",
+            PrimaryColor = "#fff",
+            Position = 2,
+            Value = "Test category"
+        };
+
+        var categoryThree = new Category
+        {
+            Id = Guid.NewGuid(),
+            AccentColor = "#aaa",
+            PrimaryColor = "#fff",
+            Position = 1,
+            Value = "Test category"
+        };
+
+        await SeedHelper.SeedRangeAsync(factory.Services, [categoryOne, categoryThree, categoryTwo]);
+
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/Category");
+
+        var response = await factory.Client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var returnedCategories = await response.Content.ReadFromJsonAsync<List<Category>>();
+        returnedCategories.Should().HaveCount(3);
+        returnedCategories
+            .Select(c => c.Position)
+            .Should()
+            .BeInAscendingOrder();
+    }
+
+    [Theory]
+    [InlineData("SystemAdmin")]
+    [InlineData("ModuleAdmin")]
+    public async Task DeleteCategory_RemovesCategoryFromDatabase(string role)
+    {
+        using var factory = new TestAppFactory();
+
+        var deleteCategoryId = Guid.NewGuid();
+        var categoryId = Guid.NewGuid();
+
+        await SeedHelper.SeedAsync(factory.Services, new Category
+        {
+            Id = deleteCategoryId,
+            AccentColor = "#aaa",
+            PrimaryColor = "#fff",
+            Position = 1,
+            Value = "Test category"
+        });
+
+        await SeedHelper.SeedAsync(factory.Services, new Category
+        {
+            Id = categoryId,
+            AccentColor = "#aaa",
+            PrimaryColor = "#fff",
+            Position = 1,
+            Value = "Test category"
+        });
+
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"/Category/{deleteCategoryId}");
+        request.Headers.Add("X-Test-Auth", "true");
+        request.Headers.Add("X-Test-Role", role);
+
+        var response = await factory.Client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent); 
+        
+        List<Category> currentCategories;
+        await using (var context = factory.CreateDbContext())
+        {
+            currentCategories = await context.Categories.ToListAsync();
+        }
+
+        currentCategories.Should().NotBeNull();
+        currentCategories.Should().NotContain(c => c.Id == deleteCategoryId);
+        currentCategories.Should().Contain(c => c.Id == categoryId);
+    }
+
+    [Theory]
+    [InlineData("SystemAdmin")]
+    [InlineData("ModuleAdmin")]
+    public async Task DeleteCategory_RespondsWithNotFound_WhenCategoryIdIsUnknown(string role)
+    {
+        using var factory = new TestAppFactory();
+
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"/Category/{Guid.NewGuid()}");
+        request.Headers.Add("X-Test-Auth", "true");
+        request.Headers.Add("X-Test-Role", role);
+
+        var response = await factory.Client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Theory] 
+    [InlineData("User")] 
+    [InlineData("Student")] 
+    [InlineData("SLB")]
+    public async Task DeleteCategory_RespondsWithForbidden_WhenRolesAreNotCorrect(string role)
+    {
+        using var factory = new TestAppFactory();
+
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"/Category/{Guid.NewGuid()}");
+        request.Headers.Add("X-Test-Auth", "true");
+        request.Headers.Add("X-Test-Role", role);
+
+        var response = await factory.Client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task DeleteCategory_RespondsWithUnauthorized_WhenNotAuthenticated()
+    {
+        using var factory = new TestAppFactory();
+
+        var request = new HttpRequestMessage(HttpMethod.Put, $"/Category/{Guid.NewGuid()}");
+
+        var response = await factory.Client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 }

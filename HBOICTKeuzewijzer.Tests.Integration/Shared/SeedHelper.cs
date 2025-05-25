@@ -20,4 +20,13 @@ public static class SeedHelper
             await db.SaveChangesAsync();
         }
     }
+
+    public static async Task SeedRangeAsync<TEntity>(IServiceProvider services, List<TEntity> entities)
+        where TEntity : class, IEntity
+    {
+        foreach (var entity in entities)
+        {
+            await SeedAsync(services, entity);
+        }
+    }
 }
