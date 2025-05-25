@@ -154,7 +154,74 @@ public class CategoryIntegrationTests
         saved!.Position.Should().Be(1);
         saved!.PrimaryColor.Should().Be("#fff");
     }
-    
+
+    [Theory]
+    [InlineData("SystemAdmin")]
+    [InlineData("ModuleAdmin")]
+    public async Task PutCategory_ShouldNotUpdateModules(string role)
+    {
+        using var factory = new TestAppFactory();
+
+        var categoryId = Guid.NewGuid();
+        var oerId = Guid.NewGuid();
+
+        await SeedHelper.SeedAsync(factory.Services, new Oer
+        {
+            AcademicYear = "24/25",
+            Id = oerId
+        });
+        await SeedHelper.SeedAsync(factory.Services, new Category
+        {
+            Id = categoryId,
+            AccentColor = "#fff",
+            PrimaryColor = "#000",
+            Position = 1,
+            Value = "Test category"
+        });
+
+        var updatedCategory = new Category
+        {
+            Id = categoryId,
+            AccentColor = "#aaa",
+            PrimaryColor = "#fff",
+            Position = 1,
+            Value = "Test category updated",
+            Modules = new List<Module>
+            {
+                new Module
+                {
+                    CategoryId = categoryId,
+                    Code = "12345",
+                    Description = "niks",
+                    ECs = 30,
+                    Level = 2,
+                    Name = "Test module 1",
+                    OerId = oerId
+                }
+            }
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Put, $"/Category/{updatedCategory.Id}")
+        {
+            Content = JsonContent.Create(updatedCategory)
+        };
+        request.Headers.Add("X-Test-Auth", "true");
+        request.Headers.Add("X-Test-Role", role);
+
+        var response = await factory.Client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        List<Module> modules;
+        await using (var context = factory.CreateDbContext())
+        {
+            modules = await context.Modules.ToListAsync();
+        }
+
+        modules.Should().NotBeNull();
+        modules.Should().NotContain(m => m.Code == "12345");
+    }
+
     [Theory]
     [InlineData("SystemAdmin")]
     [InlineData("ModuleAdmin")]

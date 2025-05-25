@@ -52,6 +52,8 @@ namespace HBOICTKeuzewijzer.Api.Controllers
                 return BadRequest();
             }
 
+            category.Modules = null; // met dit
+
             await _categoryRepo.UpdateAsync(category);
             return NoContent();
         }
