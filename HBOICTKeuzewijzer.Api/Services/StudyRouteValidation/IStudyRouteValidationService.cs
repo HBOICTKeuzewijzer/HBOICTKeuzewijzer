@@ -5,5 +5,5 @@ namespace HBOICTKeuzewijzer.Api.Services.StudyRouteValidation;
 
 public interface IStudyRouteValidationService
 {
-    ValidationProblemDetails? ValidateRoute(StudyRoute routeToValidate);
+    Task<ValidationProblemDetails?> ValidateRoute(StudyRoute routeToValidate);
 }

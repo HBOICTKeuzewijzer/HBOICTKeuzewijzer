@@ -29,43 +29,63 @@ namespace HBOICTKeuzewijzer.Tests.Services
             _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
         }
 
-        [Fact]
-        public void ValidateRoute_ThrowsArgumentNullException_WhenPassedRouteIsNull()
+        public List<IStudyRouteValidationRule> GetValidators()
         {
-            var sut = new StudyRouteValidationService();
-
-#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
-            sut.Invoking(s => s.ValidateRoute(null))
-                .Should().Throw<ArgumentNullException>();
-#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+            return
+            [
+                new PropaedeuticRule(),
+                new PropaedeuticRule(),
+                new EcRequirementRule(),
+                new ModuleRequirementRule(id =>
+                {
+                    var module = _testModules.GetById(id);
+                    return Task.FromResult<Module?>(module);
+                })
+            ];
         }
 
         [Fact]
-        public void ValidateRoute_ReturnsNull_WhenSemestersIsNull()
+        public async Task ValidateRoute_ThrowsArgumentNullException_WhenPassedRouteIsNull()
+        {
+            var sut = new StudyRouteValidationService(GetValidators());
+
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+            await sut.Awaiting(s => s.ValidateRoute(null))
+                .Should().ThrowAsync<ArgumentNullException>();
+#pragma warning restore CS8625
+        }
+
+
+        [Fact]
+        public async Task ValidateRoute_ReturnsNull_WhenSemestersIsNull()
         {
             var route = _fixture.Build<StudyRoute>()
                 .With(r => r.Semesters, (List<Semester>?)null)
                 .Create();
 
-            var sut = new StudyRouteValidationService();
+            var sut = new StudyRouteValidationService(GetValidators());
 
-            sut.ValidateRoute(route).Should().BeNull();
+            var result = await sut.ValidateRoute(route);
+
+            result.Should().BeNull();
         }
 
         [Fact]
-        public void ValidateRoute_ReturnsNull_WhenSemestersIsEmpty()
+        public async Task ValidateRoute_ReturnsNull_WhenSemestersIsEmpty()
         {
             var route = _fixture.Build<StudyRoute>()
                 .With(r => r.Semesters, new List<Semester>())
                 .Create();
 
-            var sut = new StudyRouteValidationService();
+            var sut = new StudyRouteValidationService(GetValidators());
 
-            sut.ValidateRoute(route).Should().BeNull();
+            var result = await sut.ValidateRoute(route);
+            
+            result.Should().BeNull();
         }
 
         [Fact]
-        public void ValidateRoute_ReturnValidationError_WhenRouteOnlyContainsOnePModule()
+        public async Task ValidateRoute_ReturnValidationError_WhenRouteOnlyContainsOnePModule()
         {
             // Arrange
             var invalidRoute = _fixture.Build<StudyRoute>()
@@ -96,7 +116,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
             var sut = new StudyRouteValidationService([new PropaedeuticRule()]);
 
             // Act
-            var result = sut.ValidateRoute(invalidRoute);
+            var result = await sut.ValidateRoute(invalidRoute);
 
             // Assert
             result.Should().NotBeNull();
@@ -111,7 +131,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
         }
 
         [Fact]
-        public void ValidateRoute_ReturnValidationError_WhenRouteOnlyContainsZeroPModules()
+        public async Task ValidateRoute_ReturnValidationError_WhenRouteOnlyContainsZeroPModules()
         {
             // Arrange
             var invalidRoute = _fixture.Build<StudyRoute>()
@@ -147,7 +167,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
             var sut = new StudyRouteValidationService([new PropaedeuticRule()]);
 
             // Act
-            var result = sut.ValidateRoute(invalidRoute);
+            var result = await sut.ValidateRoute(invalidRoute);
 
             // Assert
             result.Should().NotBeNull();
@@ -162,7 +182,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
         }
 
         [Fact]
-        public void ValidateRoute_ReturnValidationError_WhenRouteHasModuleInWrongSemester()
+        public async Task ValidateRoute_ReturnValidationError_WhenRouteHasModuleInWrongSemester()
         {
             // Arrange
             var invalidRoute = _fixture.Build<StudyRoute>()
@@ -192,7 +212,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
             var sut = new StudyRouteValidationService([new SemesterConstraintRule()]);
 
             // Act
-            var result = sut.ValidateRoute(invalidRoute);
+            var result = await sut.ValidateRoute(invalidRoute);
 
             // Assert
             result.Should().NotBeNull();
@@ -201,11 +221,11 @@ namespace HBOICTKeuzewijzer.Tests.Services
             result.Errors.Keys.Should().Contain(faultySemester.Id.ToString());
             result.Errors[faultySemester.Id.ToString()].Length.Should().Be(1);
             result.Errors[faultySemester.Id.ToString()][0].Should()
-                .Be($"Module: {faultySemester.Module!.Name} kan alleen plaatsvinden in semester {SemesterConstraint.First + 1}.");
+                .Be($"Module: {faultySemester.Module!.Name} kan alleen plaatsvinden in semester {(int)SemesterConstraint.First + 1}.");
         }
 
         [Fact]
-        public void ValidateRoute_ReturnMultipleValidationErrors_WhenRouteHasMultipleModulesInWrongSemester()
+        public async Task ValidateRoute_ReturnMultipleValidationErrors_WhenRouteHasMultipleModulesInWrongSemester()
         {
             // Arrange
             var invalidRoute = _fixture.Build<StudyRoute>()
@@ -238,7 +258,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
             var sut = new StudyRouteValidationService([new SemesterConstraintRule()]);
 
             // Act
-            var result = sut.ValidateRoute(invalidRoute);
+            var result = await sut.ValidateRoute(invalidRoute);
 
             // Assert
             result.Should().NotBeNull();
@@ -248,14 +268,14 @@ namespace HBOICTKeuzewijzer.Tests.Services
             result.Errors.Keys.Should().Contain(faultySemesterTwo.Id.ToString());
             result.Errors[faultySemesterOne.Id.ToString()].Length.Should().Be(1);
             result.Errors[faultySemesterOne.Id.ToString()][0].Should()
-                .Be($"Module: {faultySemesterOne.Module!.Name} kan alleen plaatsvinden in semester {SemesterConstraint.First + 1}.");
+                .Be($"Module: {faultySemesterOne.Module!.Name} kan alleen plaatsvinden in semester {(int)SemesterConstraint.First + 1}.");
             result.Errors[faultySemesterTwo.Id.ToString()].Length.Should().Be(1);
             result.Errors[faultySemesterTwo.Id.ToString()][0].Should()
-                .Be($"Module: {faultySemesterTwo.Module!.Name} kan alleen plaatsvinden in semester {SemesterConstraint.Second + 1}.");
+                .Be($"Module: {faultySemesterTwo.Module!.Name} kan alleen plaatsvinden in semester {(int)SemesterConstraint.Second + 1}.");
         }
 
         [Fact]
-        public void ValidateRoute_ReturnValidationError_WhenRouteDoesNotMeetEcRequirement()
+        public async Task ValidateRoute_ReturnValidationError_WhenRouteDoesNotMeetEcRequirement()
         {
             // Arrange
             var invalidRoute = _fixture.Build<StudyRoute>()
@@ -283,26 +303,129 @@ namespace HBOICTKeuzewijzer.Tests.Services
             invalidRoute.Semesters.Add(TestHelpers.CreateSemester(1, _testModules.BeherenVanEenVerandertraject, 10));
             invalidRoute.Semesters.Add(faultySemesterOne);
 
-            // niet voldaan aan 50ec requirement
-            // niet voldaan aan 50ec requirement uit de p fase
+            var sut = new StudyRouteValidationService([new EcRequirementRule()]);
 
+            // Act
+            var result = await sut.ValidateRoute(invalidRoute);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Errors.Should().NotBeNull();
+            result.Errors.Count.Should().Be(1);
+            result.Errors.Keys.Should().Contain(faultySemesterOne.Id.ToString());
+            result.Errors[faultySemesterOne.Id.ToString()].Length.Should().Be(1);
+            result.Errors[faultySemesterOne.Id.ToString()][0].Should()
+                .Be($"Module: {faultySemesterOne.Module!.Name} verwacht dat uit voorgaande modules minimaal 60 ec zijn behaald, huidige behaalde ec's is 40");
+        }
+
+        [Fact]
+        public async Task ValidateRoute_ReturnValidationErrors_WhenRouteDoesNotMeetEcRequirement()
+        {
+            // Arrange
+            var invalidRoute = _fixture.Build<StudyRoute>()
+                .Without(s => s.ApplicationUser)
+                .Without(s => s.Semesters)
+                .Create();
+
+            var faultySemesterOne = TestHelpers.CreateSemester(0, new Module
+            {
+                Name = "Test module",
+                PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
+                {
+                    EcRequirements = new List<EcRequirement>
+                    {
+                        new EcRequirement
+                        {
+                            RequiredAmount = 70
+                        }
+                    }
+                })
+            });
+
+            invalidRoute.Semesters = new List<Semester>();
+            invalidRoute.Semesters.Add(TestHelpers.CreateSemester(0, _testModules.BedrijfsProcessenDynamischeWebapps));
+            invalidRoute.Semesters.Add(TestHelpers.CreateSemester(1, _testModules.BeherenVanEenVerandertraject, 10));
+            invalidRoute.Semesters.Add(faultySemesterOne);
 
             var sut = new StudyRouteValidationService([new EcRequirementRule()]);
 
             // Act
-            var result = sut.ValidateRoute(invalidRoute);
+            var result = await sut.ValidateRoute(invalidRoute);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Errors.Should().NotBeNull();
+            result.Errors.Count.Should().Be(1);
+            result.Errors.Keys.Should().Contain(faultySemesterOne.Id.ToString());
+            result.Errors[faultySemesterOne.Id.ToString()].Length.Should().Be(2);
+            result.Errors[faultySemesterOne.Id.ToString()][0].Should()
+                .Be($"Module: {faultySemesterOne.Module!.Name} verwacht dat uit voorgaande modules minimaal 70 ec zijn behaald, huidige behaalde ec's is 40");
+            result.Errors[faultySemesterOne.Id.ToString()][1].Should()
+                .Be($"Module: {faultySemesterOne.Module!.Name} verwacht dat uit voorgaande modules minimaal 70 ec behaalbaar zijn, huidige behaalbare ec's is 60");
         }
-        // hier ga ik werken aan YearConstraints and available from year!!!!!!!!!!
+
+        [Fact]
+        public async Task ValidateRoute_ReturnValidationErrorsForP_WhenRouteDoesNotMeetEcRequirement()
+        {
+            // Arrange
+            var invalidRoute = _fixture.Build<StudyRoute>()
+                .Without(s => s.ApplicationUser)
+                .Without(s => s.Semesters)
+                .Create();
+
+            var faultySemesterOne = TestHelpers.CreateSemester(0, new Module
+            {
+                Name = "Test module",
+                PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
+                {
+                    EcRequirements = new List<EcRequirement>
+                    {
+                        new EcRequirement
+                        {
+                            RequiredAmount = 60,
+                            Propaedeutic = true
+                        }
+                    }
+                })
+            });
+
+            invalidRoute.Semesters = new List<Semester>();
+            invalidRoute.Semesters.Add(TestHelpers.CreateSemester(0, _testModules.BedrijfsProcessenDynamischeWebapps));
+            invalidRoute.Semesters.Add(TestHelpers.CreateSemester(0, _testModules.ManagementOfIt));
+            invalidRoute.Semesters.Add(faultySemesterOne);
+
+            var sut = new StudyRouteValidationService([new EcRequirementRule()]);
+
+            // Act
+            var result = await sut.ValidateRoute(invalidRoute);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Errors.Should().NotBeNull();
+            result.Errors.Count.Should().Be(1);
+            result.Errors.Keys.Should().Contain(faultySemesterOne.Id.ToString());
+            result.Errors[faultySemesterOne.Id.ToString()].Length.Should().Be(2);
+            result.Errors[faultySemesterOne.Id.ToString()][0].Should()
+                .Be($"Module: {faultySemesterOne.Module!.Name} verwacht dat uit propedeuse minimaal 60 ec zijn behaald, huidige behaalde ec's is 30");
+            result.Errors[faultySemesterOne.Id.ToString()][1].Should()
+                .Be($"Module: {faultySemesterOne.Module!.Name} verwacht dat uit propedeuse minimaal 60 ec behaalbaar zijn, huidige behaalbare ec's is 30");
+        }
+
+        [Fact]
+        public async Task ValidateRoute_ReturnValidationError_WhenRouteDoesNotMeetModuleRequirements()
+        {
+
+        }
 
         [Theory]
         [ClassData(typeof(ValidStudyRouteData))]
-        public void ValidateStudyRoute_ReturnNull_WithValidStudyRoutes(StudyRoute studyRoute)
+        public async Task ValidateStudyRoute_ReturnNull_WithValidStudyRoutes(StudyRoute studyRoute)
         {
             // Arrange
-            var sut = new StudyRouteValidationService();
+            var sut = new StudyRouteValidationService(GetValidators());
 
             // Act
-            var result = sut.ValidateRoute(studyRoute);
+            var result = await sut.ValidateRoute(studyRoute);
 
             // Assert
             result.Should().BeNull();
@@ -342,7 +465,7 @@ public class ValidStudyRouteData : IEnumerable<object[]>
         {
             new StudyRoute
             {
-                Id = Guid.NewGuid(),
+                Id = new Guid("392e1cd7-6374-490d-a473-fc1d404538ce"),
                 Semesters = new List<Semester>
                 {
                     TestHelpers.CreateSemester(0, _testModules.BedrijfsProcessenDynamischeWebapps),
@@ -361,7 +484,7 @@ public class ValidStudyRouteData : IEnumerable<object[]>
         {
             new StudyRoute
             {
-                Id = Guid.NewGuid(),
+                Id = new Guid("413b3f8c-f0d9-405e-8331-9b8be4bc967f"),
                 Semesters = new List<Semester>
                 {
                     TestHelpers.CreateSemester(0, _testModules.BedrijfsProcessenDynamischeWebapps),
@@ -380,7 +503,7 @@ public class ValidStudyRouteData : IEnumerable<object[]>
         {
             new StudyRoute
             {
-                Id = Guid.NewGuid(),
+                Id = new Guid("8d1adff6-b31b-4bc0-9e37-9997dc211cb0"),
                 Semesters = new List<Semester>
                 {
                     TestHelpers.CreateSemester(0, _testModules.BedrijfsProcessenDynamischeWebapps),
@@ -399,7 +522,7 @@ public class ValidStudyRouteData : IEnumerable<object[]>
         {
             new StudyRoute
             {
-                Id = Guid.NewGuid(),
+                Id = new Guid("55bd3618-f85a-4379-9756-4fa6a8c94ce8"),
                 Semesters = new List<Semester>
                 {
                     TestHelpers.CreateSemester(0, _testModules.BedrijfsProcessenDynamischeWebapps),
@@ -418,7 +541,7 @@ public class ValidStudyRouteData : IEnumerable<object[]>
         {
             new StudyRoute
             {
-                Id = Guid.NewGuid(),
+                Id = new Guid("2f595dde-0314-4291-a185-03e315e9c3ee"),
                 Semesters = new List<Semester>
                 {
                     TestHelpers.CreateSemester(0, _testModules.BedrijfsProcessenDynamischeWebapps),
@@ -437,7 +560,7 @@ public class ValidStudyRouteData : IEnumerable<object[]>
         {
             new StudyRoute
             {
-                Id = Guid.NewGuid(),
+                Id = new Guid("60af565a-dab0-444a-a616-7e1bd6313506"),
                 Semesters = new List<Semester>
                 {
                     TestHelpers.CreateSemester(0, _testModules.BedrijfsProcessenDynamischeWebapps),
@@ -499,13 +622,18 @@ public class TestModules
 
     #endregion
 
+    public Module? GetById(Guid id)
+    {
+        return Modules.Values.FirstOrDefault(m => m.Id == id);
+    }
+
     public TestModules()
     {
         Modules = new Dictionary<string, Module>();
 
         Modules.Add(bedrijfsProcessenDynamischeWebapps, new Module
         {
-            Id = Guid.NewGuid(),
+            Id = new Guid("62c7e4c9-b64a-4e2e-b40c-2fffa6c589f5"),
             Name = bedrijfsProcessenDynamischeWebapps,
             PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
             {
@@ -520,7 +648,7 @@ public class TestModules
 
         Modules.Add(beherenVanEenVerandertraject, new Module
         {
-            Id = Guid.NewGuid(),
+            Id = new Guid("4658a381-45bc-4fcb-bcc4-6a90bd0ba8d0"),
             Name = beherenVanEenVerandertraject,
             PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
             {
@@ -542,7 +670,7 @@ public class TestModules
 
         Modules.Add(ooSoftwareDesignDevelopment, new Module
         {
-            Id = Guid.NewGuid(),
+            Id = new Guid("d5dbabd3-b94d-487a-86fb-00b9393ae099"),
             Name = ooSoftwareDesignDevelopment,
             PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
             {
@@ -562,7 +690,7 @@ public class TestModules
 
         Modules.Add(webDevelopment, new Module
         {
-            Id = Guid.NewGuid(),
+            Id = new Guid("fcf7409f-f161-4457-b3cf-1f93cd8b5a6a"),
             Name = webDevelopment,
             PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
             {
@@ -592,7 +720,7 @@ public class TestModules
 
         Modules.Add(businessProcessManagement, new Module
         {
-            Id = Guid.NewGuid(),
+            Id = new Guid("70361855-035f-4f49-bc39-f3cb8f1c0e58"),
             Name = businessProcessManagement,
             PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
             {
@@ -612,7 +740,7 @@ public class TestModules
 
         Modules.Add(dataScience, new Module
         {
-            Id = Guid.NewGuid(),
+            Id = new Guid("61ef8516-1b98-40b8-aa91-cdc954a5cc1f"),
             Name = dataScience,
             PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
             {
@@ -632,7 +760,7 @@ public class TestModules
 
         Modules.Add(hybridCloudInfrastructure, new Module
         {
-            Id = Guid.NewGuid(),
+            Id = new Guid("28f907ed-1a05-4957-82e8-4ec7f27b6d08"),
             Name = hybridCloudInfrastructure,
             PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
             {
@@ -652,7 +780,7 @@ public class TestModules
 
         Modules.Add(cloudArchitectureAutomation, new Module
         {
-            Id = Guid.NewGuid(),
+            Id = new Guid("191b7c83-402c-48de-b543-12b7ab8349cd"),
             Name = cloudArchitectureAutomation,
             PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
             {
@@ -672,7 +800,7 @@ public class TestModules
 
         Modules.Add(qualitySoftwareDevelopment, new Module
         {
-            Id = Guid.NewGuid(),
+            Id = new Guid("3f45991c-cc88-4d8d-b184-057f5e58376a"),
             Name = qualitySoftwareDevelopment,
             PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
             {
@@ -696,7 +824,7 @@ public class TestModules
 
         Modules.Add(managementOfIt, new Module
         {
-            Id = Guid.NewGuid(),
+            Id = new Guid("e0ee9325-196e-45cf-b500-78b1e874f2b5"),
             Name = managementOfIt,
             PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
             {
@@ -709,7 +837,7 @@ public class TestModules
 
         Modules.Add(appliedItSecurity, new Module
         {
-            Id = Guid.NewGuid(),
+            Id = new Guid("9ff00680-8725-4d35-9fe9-3ac7f51cba39"),
             Name = appliedItSecurity,
             PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
             {
@@ -722,7 +850,7 @@ public class TestModules
 
         Modules.Add(multidisciplinaireOpdracht, new Module
         {
-            Id = Guid.NewGuid(),
+            Id = new Guid("e3026336-e59e-41fd-a84b-dfa24f355cb9"),
             Name = multidisciplinaireOpdracht,
             PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
             {
@@ -749,7 +877,7 @@ public class TestModules
 
         Modules.Add(stage, new Module
         {
-            Id = Guid.NewGuid(),
+            Id = new Guid("43ee338a-0c0a-4b33-8338-a8e3ad9ed0e0"),
             Name = stage,
             PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
             {
@@ -761,7 +889,7 @@ public class TestModules
 
         Modules.Add(afstuderenSE, new Module
         {
-            Id = Guid.NewGuid(),
+            Id = new Guid("8d779309-80df-43ee-8c5a-d35b86c255d8"),
             Name = afstuderenSE,
             PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
             {
@@ -849,7 +977,7 @@ public class TestModules
 
         Modules.Add(afstuderenIDS, new Module
         {
-            Id = Guid.NewGuid(),
+            Id = new Guid("16a71c27-8ecb-4078-9b5b-caf349459d17"),
             Name = afstuderenIDS,
             PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
             {
@@ -937,7 +1065,7 @@ public class TestModules
 
         Modules.Add(afstuderenBIM, new Module
         {
-            Id = Guid.NewGuid(),
+            Id = new Guid("ea99db39-6fc0-4b13-b9a2-3c708816a85c"),
             Name = afstuderenBIM,
             PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
             {
