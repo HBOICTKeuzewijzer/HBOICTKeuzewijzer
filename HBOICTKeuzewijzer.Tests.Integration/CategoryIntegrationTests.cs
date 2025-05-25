@@ -10,7 +10,7 @@ public class CategoryIntegrationTests
     [Theory]
     [InlineData("SystemAdmin")]
     [InlineData("ModuleAdmin")]
-    public async Task APostCategory_CreatesEntryInDatabase(string role)
+    public async Task PostCategory_CreatesEntryInDatabase(string role)
     {
         using var factory = new TestAppFactory();
 
