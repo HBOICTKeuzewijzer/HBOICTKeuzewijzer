@@ -112,7 +112,5 @@ namespace HBOICTKeuzewijzer.Api.Services
                 appDbContext.ApplicationUserRoles.RemoveRange(rolesToRemove);
             }
         }
-
     }
-
 }

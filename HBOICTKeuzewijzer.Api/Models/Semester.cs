@@ -19,6 +19,11 @@ namespace HBOICTKeuzewijzer.Api.Models
         [ForeignKey(nameof(ModuleId))]
         public Module? Module { get; set; }
 
+        public Guid? CustomModuleId { get; set; }
+
+        [ForeignKey(nameof(CustomModuleId))]
+        public CustomModule? CutomModule { get; set; }
+
         [Required]
         public Guid StudyRouteId { get; set; }
 

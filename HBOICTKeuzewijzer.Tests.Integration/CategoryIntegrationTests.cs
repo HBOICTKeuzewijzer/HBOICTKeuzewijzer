@@ -1,50 +1,69 @@
-﻿using HBOICTKeuzewijzer.Api.DAL;
-using HBOICTKeuzewijzer.Tests.Integration.Fixtures;
-using Microsoft.Extensions.DependencyInjection;
+﻿using HBOICTKeuzewijzer.Api.Models;
+using System.Net;
 using System.Net.Http.Json;
-using Microsoft.EntityFrameworkCore;
+using FluentAssertions;
 
 namespace HBOICTKeuzewijzer.Tests.Integration;
 
-[Collection("Shared Test Collection")]
-public class CategoryIntegrationTests(SharedDatabaseFixture fixture)
+public class CategoryIntegrationTests
 {
-    private readonly HttpClient _client = fixture.Client;
-
-    [Fact]
-    public async Task PostCategory_CreatesModuleInDatabase()
+    [Theory]
+    [InlineData("SystemAdmin")]
+    [InlineData("ModuleAdmin")]
+    public async Task APostCategory_CreatesEntryInDatabase(string role)
     {
-        // Arrange
-        await fixture.ResetDatabaseAsync();
+        using var factory = new TestAppFactory();
 
-        var newCategory = new
+        var newCategory = new Category
         {
-            value = "Software engineering",
-            primaryColor = "#fff",
-            accentColor = "#000",
-            position = 1
+            Id = Guid.NewGuid(),
+            Value = "Test Category",
+            Position = 1
         };
 
-        // Act
-        var response = await _client.PostAsJsonAsync("/category", newCategory);
+        var request = new HttpRequestMessage(HttpMethod.Post, "/Category")
+        {
+            Content = JsonContent.Create(newCategory)
+        };
+        request.Headers.Add("X-Test-Role", role);
 
-        // Assert
-        response.EnsureSuccessStatusCode();
+        var response = await factory.Client.SendAsync(request);
 
-        // Optionally: verify DB contents
-        using var scope = new ServiceCollection()
-            .AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(fixture.DbContainer.GetConnectionString()))
-            .BuildServiceProvider()
-            .CreateScope();
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        response.Headers.Location!.AbsolutePath.Should().Be($"/Category/{newCategory.Id}");
 
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var categoryInDb = await db.Categories.FirstOrDefaultAsync(m => m.Value == newCategory.value);
+        var saved = await factory.DbContext.Categories.FindAsync(newCategory.Id);
+        saved.Should().NotBeNull();
+        saved!.Value.Should().Be("Test Category");
+    }
 
-        Assert.NotNull(categoryInDb);
-        Assert.Equal(newCategory.value, categoryInDb.Value);
-        Assert.Equal(newCategory.primaryColor, categoryInDb.PrimaryColor);
-        Assert.Equal(newCategory.accentColor, categoryInDb.AccentColor);
-        Assert.Equal(newCategory.position, categoryInDb.Position);
+    [Theory]
+    [InlineData("SystemAdmin")]
+    [InlineData("ModuleAdmin")]
+    public async Task PostCategory_CreatesEntryInDatabase(string role)
+    {
+        using var factory = new TestAppFactory();
+
+        var newCategory = new Category
+        {
+            Id = Guid.NewGuid(),
+            Value = "Test Category",
+            Position = 1
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "/Category")
+        {
+            Content = JsonContent.Create(newCategory)
+        };
+        request.Headers.Add("X-Test-Role", role);
+
+        var response = await factory.Client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        response.Headers.Location!.AbsolutePath.Should().Be($"/Category/{newCategory.Id}");
+
+        var saved = await factory.DbContext.Categories.FindAsync(newCategory.Id);
+        saved.Should().NotBeNull();
+        saved!.Value.Should().Be("Test Category");
     }
 }
