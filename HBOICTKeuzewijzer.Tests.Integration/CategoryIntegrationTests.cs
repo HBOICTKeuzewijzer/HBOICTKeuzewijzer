@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
 using HBOICTKeuzewijzer.Tests.Integration.Shared;
+using System.Data;
 
 namespace HBOICTKeuzewijzer.Tests.Integration;
 
@@ -28,6 +29,7 @@ public class CategoryIntegrationTests
         {
             Content = JsonContent.Create(newCategory)
         };
+        request.Headers.Add("X-Test-Auth", "true");
         request.Headers.Add("X-Test-Role", role);
 
         var response = await factory.Client.SendAsync(request);
@@ -81,6 +83,7 @@ public class CategoryIntegrationTests
         {
             Content = JsonContent.Create(updatedCategory)
         };
+        request.Headers.Add("X-Test-Auth", "true");
         request.Headers.Add("X-Test-Role", role);
 
         var response = await factory.Client.SendAsync(request);
@@ -98,5 +101,86 @@ public class CategoryIntegrationTests
         saved!.AccentColor.Should().Be("#aaa");
         saved!.Position.Should().Be(1);
         saved!.PrimaryColor.Should().Be("#fff");
+    }
+    
+    [Theory]
+    [InlineData("SystemAdmin")]
+    [InlineData("ModuleAdmin")]
+    public async Task PutCategory_RespondsWithBadRequest_WhenIdDoesNotMatchCategory(string role)
+    {
+        using var factory = new TestAppFactory();
+
+        var category = new Category
+        {
+            Id = Guid.NewGuid(),
+            AccentColor = "#aaa",
+            PrimaryColor = "#fff",
+            Position = 1,
+            Value = "Test category updated"
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Put, $"/Category/{/*invalid id*/Guid.NewGuid()}")
+        {
+            Content = JsonContent.Create(category)
+        };
+        request.Headers.Add("X-Test-Auth", "true");
+        request.Headers.Add("X-Test-Role", role);
+
+        var response = await factory.Client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task PutCategory_RespondsWithUnauthorized_WhenNotAuthenticated()
+    {
+        using var factory = new TestAppFactory();
+
+        var category = new Category
+        {
+            Id = Guid.NewGuid(),
+            AccentColor = "#aaa",
+            PrimaryColor = "#fff",
+            Position = 1,
+            Value = "Test category updated"
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Put, $"/Category/{category.Id}")
+        {
+            Content = JsonContent.Create(category)
+        };
+
+        var response = await factory.Client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Theory]
+    [InlineData("User")]
+    [InlineData("Student")]
+    [InlineData("SLB")]
+    public async Task PutCategory_RespondsWithForbidden_WhenRolesAreNotCorrect(string role)
+    {
+        using var factory = new TestAppFactory();
+
+        var category = new Category
+        {
+            Id = Guid.NewGuid(),
+            AccentColor = "#aaa",
+            PrimaryColor = "#fff",
+            Position = 1,
+            Value = "Test category updated"
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Put, $"/Category/{category.Id}")
+        {
+            Content = JsonContent.Create(category)
+        };
+        request.Headers.Add("X-Test-Auth", "true");
+        request.Headers.Add("X-Test-Role", role);
+
+        var response = await factory.Client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 }
