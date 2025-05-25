@@ -1,5 +1,4 @@
-﻿using System.Net.Http;
-using HBOICTKeuzewijzer.Api;
+﻿using HBOICTKeuzewijzer.Api;
 using HBOICTKeuzewijzer.Api.DAL;
 using HBOICTKeuzewijzer.Tests.Integration.Shared;
 using Microsoft.AspNetCore.Authentication;
@@ -20,8 +19,7 @@ public class TestAppFactory : IDisposable
     {
         // Standalone DI container to hold DbContext for assertions
         var services = new ServiceCollection();
-        services.AddDbContext<AppDbContext>(options =>
-            options.UseInMemoryDatabase(DatabaseName));
+        services.AddDbContext<AppDbContext>(options => options.UseInMemoryDatabase(DatabaseName));
 
         _internalServiceProvider = services.BuildServiceProvider();
         DbContext = _internalServiceProvider.GetRequiredService<AppDbContext>();
