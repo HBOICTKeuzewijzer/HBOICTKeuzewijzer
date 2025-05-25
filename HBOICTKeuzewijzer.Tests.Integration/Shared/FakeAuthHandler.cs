@@ -18,6 +18,9 @@ namespace HBOICTKeuzewijzer.Tests.Integration.Shared
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
             var role = Request.Headers["X-Test-Role"].FirstOrDefault();
+            var userId = Request.Headers["X-User-Id"].FirstOrDefault() ?? "6457A1CF-FAE1-46B5-BF24-C9D655BBA4EF";
+            var name = Request.Headers["X-User-Name"].FirstOrDefault() ?? "Test User";
+            var email = Request.Headers["X-User-Email"].FirstOrDefault() ?? "test@example.com";
             var claims = new List<Claim>();
 
             if (!string.IsNullOrWhiteSpace(role))
@@ -27,10 +30,10 @@ namespace HBOICTKeuzewijzer.Tests.Integration.Shared
 
             claims.AddRange(new[]
             {
-                new Claim(ClaimTypes.Name, "Test User"),
-                new Claim(ClaimTypes.NameIdentifier, "6457A1CF-FAE1-46B5-BF24-C9D655BBA4EF"),
-                new Claim(ClaimTypes.Email, "test@example.com"),
-                new Claim("http://schemas.microsoft.com/identity/claims/displayname", "Test User")
+                new Claim(ClaimTypes.Name, name),
+                new Claim(ClaimTypes.NameIdentifier, userId),
+                new Claim(ClaimTypes.Email, email),
+                new Claim("http://schemas.microsoft.com/identity/claims/displayname", name)
             });
 
             var identity = new ClaimsIdentity(claims, AuthenticationScheme);
