@@ -2,7 +2,7 @@
 
 namespace HBOICTKeuzewijzer.Api.Models
 {
-    public class ApplicationUserRole
+    public class ApplicationUserRole : IEntity
     {
         [Key]
         public Guid Id { get; set; }

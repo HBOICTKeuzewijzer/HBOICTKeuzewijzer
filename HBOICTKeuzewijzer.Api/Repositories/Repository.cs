@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace HBOICTKeuzewijzer.Api.Repositories
 {
-    public class Repository<T> : IRepository<T> where T : class
+    public class Repository<T> : IRepository<T> where T : class, IEntity
     {
         protected readonly AppDbContext _context;
         protected readonly DbSet<T> _dbSet;
@@ -35,8 +35,17 @@ namespace HBOICTKeuzewijzer.Api.Repositories
 
         public async Task UpdateAsync(T entity)
         {
-            _dbSet.Attach(entity);
-            _context.Entry(entity).State = EntityState.Modified;
+            var trackedEntity = _dbSet.Local.FirstOrDefault(e => e.Id.Equals(entity.Id));
+            if (trackedEntity != null)
+            {
+                _context.Entry(trackedEntity).CurrentValues.SetValues(entity);
+            }
+            else
+            {
+                _dbSet.Attach(entity);
+                _context.Entry(entity).State = EntityState.Modified;
+            }
+
             await _context.SaveChangesAsync();
         }
 

@@ -2,7 +2,7 @@
 
 namespace HBOICTKeuzewijzer.Api.Models
 {
-    public class Oer
+    public class Oer : IEntity
     {
         [Key]
         public Guid Id { get; set; }
