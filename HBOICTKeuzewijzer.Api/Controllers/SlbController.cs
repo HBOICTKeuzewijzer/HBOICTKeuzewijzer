@@ -14,9 +14,9 @@ namespace HBOICTKeuzewijzer.Api.Controllers
     public class SlbController : ControllerBase
     {
         private readonly ISlbRepository _slbRepo;
-        private readonly ApplicationUserService _userService;
+        private readonly IApplicationUserService _userService;
 
-        public SlbController(ISlbRepository slbRepo, ApplicationUserService userService)
+        public SlbController(ISlbRepository slbRepo, IApplicationUserService userService)
         {
             _slbRepo = slbRepo;
             _userService = userService;

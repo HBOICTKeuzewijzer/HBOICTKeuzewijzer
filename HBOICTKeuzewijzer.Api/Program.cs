@@ -80,7 +80,7 @@ namespace HBOICTKeuzewijzer.Api
             services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(config.GetConnectionString("Default")));
 
-            services.AddScoped<ApplicationUserService>();
+            services.AddScoped<IApplicationUserService>();
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddScoped<IStudyRouteRepository, StudyRouteRepository>();
             services.AddScoped<IModuleRepository, ModuleRepository>();

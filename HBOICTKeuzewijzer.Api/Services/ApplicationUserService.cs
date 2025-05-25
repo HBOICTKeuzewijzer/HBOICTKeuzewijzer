@@ -5,8 +5,15 @@ using HBOICTKeuzewijzer.Api.Models;
 
 namespace HBOICTKeuzewijzer.Api.Services
 {
-    public class ApplicationUserService(AppDbContext appDbContext)
+    public class ApplicationUserService : IApplicationUserService
     {
+        private readonly AppDbContext appDbContext;
+
+        public ApplicationUserService(AppDbContext appDbContext)
+        {
+            this.appDbContext = appDbContext;
+        }
+
         public async Task<ApplicationUser> GetOrCreateUserAsync(ClaimsPrincipal principal)
         {
             var externalId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
