@@ -46,6 +46,17 @@ namespace HBOICTKeuzewijzer.Tests.Integration.Fixtures
             Client = factory.CreateClient();
         }
 
+        public async Task ExecuteDbContextAsync(Func<AppDbContext, Task> action)
+        {
+            using var scope = new ServiceCollection()
+                .AddDbContext<AppDbContext>(options => options.UseSqlServer(DbContainer.GetConnectionString()))
+                .BuildServiceProvider()
+                .CreateScope();
+
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            await action(db);
+        }
+
         public async Task DisposeAsync()
         {
             await DbContainer.DisposeAsync();
