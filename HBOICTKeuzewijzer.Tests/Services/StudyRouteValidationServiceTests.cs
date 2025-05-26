@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using System.Collections;
 using HBOICTKeuzewijzer.Api.Services.StudyRouteValidation;
 using System;
+using System.Text;
 
 namespace HBOICTKeuzewijzer.Tests.Services
 {
@@ -414,7 +415,93 @@ namespace HBOICTKeuzewijzer.Tests.Services
         [Fact]
         public async Task ValidateRoute_ReturnValidationError_WhenRouteDoesNotMeetModuleRequirements()
         {
+            // Arrange
+            var invalidRoute = _fixture.Build<StudyRoute>()
+                .Without(s => s.ApplicationUser)
+                .Without(s => s.Semesters)
+                .Create();
 
+            var faultySemesterOne = TestHelpers.CreateSemester(0, new Module
+            {
+                Name = "Test module",
+                PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
+                {
+                    ModuleRequirementGroups = [
+                        new ModuleRequirementGroup {
+                            ModuleRequirements = [
+                                new ModuleRequirement
+                                {
+                                    RelevantModuleId = _testModules.OoSoftwareDesignDevelopment.Id
+                                },
+                                new ModuleRequirement
+                                {
+                                    RelevantModuleId = _testModules.WebDevelopment.Id
+                                }
+                            ]
+                        },
+                        new ModuleRequirementGroup
+                        {
+                            ModuleRequirements = [
+                                new ModuleRequirement
+                                {
+                                    RelevantModuleId = _testModules.OoSoftwareDesignDevelopment.Id,
+                                },
+                                new ModuleRequirement
+                                {
+                                    RelevantModuleId = _testModules.QualitySoftwareDevelopment.Id
+                                },
+                                new ModuleRequirement
+                                {
+                                    RelevantModuleId = _testModules.BedrijfsProcessenDynamischeWebapps.Id,
+                                    EcRequirement = new EcRequirement
+                                    {
+                                        RequiredAmount = 30
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                })
+            });
+
+            invalidRoute.Semesters = new List<Semester>();
+            invalidRoute.Semesters.Add(TestHelpers.CreateSemester(0, _testModules.BedrijfsProcessenDynamischeWebapps, 20));
+            invalidRoute.Semesters.Add(TestHelpers.CreateSemester(0, _testModules.ManagementOfIt));
+            invalidRoute.Semesters.Add(faultySemesterOne);
+
+            var sut = new StudyRouteValidationService([new ModuleRequirementRule(id =>
+                {
+                    var module = _testModules.GetById(id);
+                    return Task.FromResult<Module?>(module);
+                })]);
+
+            // Act
+            var result = await sut.ValidateRoute(invalidRoute);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Errors.Should().NotBeNull();
+            result.Errors.Count.Should().Be(1);
+            result.Errors.Keys.Should().Contain(faultySemesterOne.Id.ToString());
+            result.Errors[faultySemesterOne.Id.ToString()].Length.Should().Be(2);
+
+            var errors = result.Errors[faultySemesterOne.Id.ToString()];
+            errors[0].Should()
+                .Be($"Module: {faultySemesterOne.Module!.Name} verwacht dat uit module '{_testModules.BedrijfsProcessenDynamischeWebapps.Name}' minimaal 30 ec zijn behaald, huidige behaalde ec's is 20");
+
+            var sb = new StringBuilder();
+            sb.AppendLine("Module: Test module verwacht dat een van de volgende groepen modules aanwezig is in de voorgaande semesters:");
+            sb.AppendLine();
+            sb.AppendLine("Groep 1:");
+            sb.AppendLine($"- {_testModules.OoSoftwareDesignDevelopment.Name}");
+            sb.AppendLine($"- {_testModules.WebDevelopment.Name}");
+            sb.AppendLine();
+            sb.AppendLine("Groep 2:");
+            sb.AppendLine($"- {_testModules.OoSoftwareDesignDevelopment.Name}");
+            sb.AppendLine($"- {_testModules.QualitySoftwareDevelopment.Name}");
+
+            errors[1].Should()
+                .Be(sb.ToString());
         }
 
         [Theory]
