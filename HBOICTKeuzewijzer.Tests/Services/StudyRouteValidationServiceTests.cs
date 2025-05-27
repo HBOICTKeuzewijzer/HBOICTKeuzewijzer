@@ -2,12 +2,11 @@
 using FluentAssertions;
 using HBOICTKeuzewijzer.Api.Models;
 using HBOICTKeuzewijzer.Api.Models.OerRequirements;
-using HBOICTKeuzewijzer.Api.Services;
 using Newtonsoft.Json;
 using System.Collections;
 using HBOICTKeuzewijzer.Api.Services.StudyRouteValidation;
-using System;
 using System.Text;
+using HBOICTKeuzewijzer.Api.Services.StudyRouteValidation.Validators;
 
 namespace HBOICTKeuzewijzer.Tests.Services
 {
@@ -128,7 +127,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
             result.Errors[faultySemester.Id.ToString()][0].Should()
                 .Be($"Module: {faultySemester.Module!.Name} verwacht een voltooide propedeuse, minimaal 2 modules uit de P fase, 1 gevonden.");
             result.Errors[faultySemester.Id.ToString()][1].Should()
-                .Be($"Module: {faultySemester.Module!.Name} verwacht een voltooide propedeuse, minimaal 60 ec's behaald in de P fase, huidige ec's 30");
+                .Be($"Module: {faultySemester.Module!.Name} verwacht een voltooide propedeuse, minimaal 60 ec's behaald in de P fase, huidige ec's 30.");
         }
 
         [Fact]
@@ -179,7 +178,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
             result.Errors[faultySemester.Id.ToString()][0].Should()
                 .Be($"Module: {faultySemester.Module!.Name} verwacht een voltooide propedeuse, minimaal 2 modules uit de P fase, 0 gevonden.");
             result.Errors[faultySemester.Id.ToString()][1].Should()
-                .Be($"Module: {faultySemester.Module!.Name} verwacht een voltooide propedeuse, minimaal 60 ec's behaald in de P fase, huidige ec's 0");
+                .Be($"Module: {faultySemester.Module!.Name} verwacht een voltooide propedeuse, minimaal 60 ec's behaald in de P fase, huidige ec's 0.");
         }
 
         [Fact]
@@ -316,7 +315,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
             result.Errors.Keys.Should().Contain(faultySemesterOne.Id.ToString());
             result.Errors[faultySemesterOne.Id.ToString()].Length.Should().Be(1);
             result.Errors[faultySemesterOne.Id.ToString()][0].Should()
-                .Be($"Module: {faultySemesterOne.Module!.Name} verwacht dat uit voorgaande modules minimaal 60 ec zijn behaald, huidige behaalde ec's is 40");
+                .Be($"Module: {faultySemesterOne.Module!.Name} verwacht dat uit voorgaande modules minimaal 60 ec zijn behaald, huidige behaalde ec's is 40.");
         }
 
         [Fact]
@@ -360,9 +359,9 @@ namespace HBOICTKeuzewijzer.Tests.Services
             result.Errors.Keys.Should().Contain(faultySemesterOne.Id.ToString());
             result.Errors[faultySemesterOne.Id.ToString()].Length.Should().Be(2);
             result.Errors[faultySemesterOne.Id.ToString()][0].Should()
-                .Be($"Module: {faultySemesterOne.Module!.Name} verwacht dat uit voorgaande modules minimaal 70 ec zijn behaald, huidige behaalde ec's is 40");
+                .Be($"Module: {faultySemesterOne.Module!.Name} verwacht dat uit voorgaande modules minimaal 70 ec zijn behaald, huidige behaalde ec's is 40.");
             result.Errors[faultySemesterOne.Id.ToString()][1].Should()
-                .Be($"Module: {faultySemesterOne.Module!.Name} verwacht dat uit voorgaande modules minimaal 70 ec behaalbaar zijn, huidige behaalbare ec's is 60");
+                .Be($"Module: {faultySemesterOne.Module!.Name} verwacht dat uit voorgaande modules minimaal 70 ec behaalbaar zijn, huidige behaalbare ec's is 60.");
         }
 
         [Fact]
@@ -407,9 +406,9 @@ namespace HBOICTKeuzewijzer.Tests.Services
             result.Errors.Keys.Should().Contain(faultySemesterOne.Id.ToString());
             result.Errors[faultySemesterOne.Id.ToString()].Length.Should().Be(2);
             result.Errors[faultySemesterOne.Id.ToString()][0].Should()
-                .Be($"Module: {faultySemesterOne.Module!.Name} verwacht dat uit propedeuse minimaal 60 ec zijn behaald, huidige behaalde ec's is 30");
+                .Be($"Module: {faultySemesterOne.Module!.Name} verwacht dat uit propedeuse minimaal 60 ec zijn behaald, huidige behaalde ec's is 30.");
             result.Errors[faultySemesterOne.Id.ToString()][1].Should()
-                .Be($"Module: {faultySemesterOne.Module!.Name} verwacht dat uit propedeuse minimaal 60 ec behaalbaar zijn, huidige behaalbare ec's is 30");
+                .Be($"Module: {faultySemesterOne.Module!.Name} verwacht dat uit propedeuse minimaal 60 ec behaalbaar zijn, huidige behaalbare ec's is 30.");
         }
 
         [Fact]
@@ -498,6 +497,76 @@ namespace HBOICTKeuzewijzer.Tests.Services
             sb.AppendLine($"- {_testModules.OoSoftwareDesignDevelopment.Name} niet gevonden.");
             sb.AppendLine($"- {_testModules.QualitySoftwareDevelopment.Name} niet gevonden.");
             sb.AppendLine($"- {_testModules.BedrijfsProcessenDynamischeWebapps.Name} wel gevonden maar voldoet niet aan de behaalde ec eis van 30.");
+
+            errors[0].Should()
+                .Be(sb.ToString());
+        }
+
+        [Fact]
+        public async Task ValidateRoute_ReturnValidationError_WhenRouteDoesNotMeetModuleRequirementsEvenIfOneMatches()
+        {
+            // Arrange
+            var invalidRoute = _fixture.Build<StudyRoute>()
+                .Without(s => s.ApplicationUser)
+                .Without(s => s.Semesters)
+                .Create();
+
+            var faultySemesterOne = TestHelpers.CreateSemester(0, new Module
+            {
+                Name = "Test module",
+                PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
+                {
+                    ModuleRequirementGroups = [
+                        new ModuleRequirementGroup {
+                            ModuleRequirements = [
+                                new ModuleRequirement
+                                {
+                                    RelevantModuleId = _testModules.OoSoftwareDesignDevelopment.Id
+                                },
+                                new ModuleRequirement
+                                {
+                                    RelevantModuleId = _testModules.WebDevelopment.Id
+                                },
+                                new ModuleRequirement
+                                {
+                                    RelevantModuleId = _testModules.BedrijfsProcessenDynamischeWebapps.Id
+                                }
+                            ]
+                        }
+                    ]
+                })
+            });
+
+            invalidRoute.Semesters = new List<Semester>();
+            invalidRoute.Semesters.Add(TestHelpers.CreateSemester(0, _testModules.BedrijfsProcessenDynamischeWebapps, 20));
+            invalidRoute.Semesters.Add(TestHelpers.CreateSemester(0, _testModules.ManagementOfIt));
+            invalidRoute.Semesters.Add(faultySemesterOne);
+
+            var sut = new StudyRouteValidationService([new ModuleRequirementRule(id =>
+                {
+                    var module = _testModules.GetById(id);
+                    return Task.FromResult<Module?>(module);
+                })]);
+
+            // Act
+            var result = await sut.ValidateRoute(invalidRoute);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Errors.Should().NotBeNull();
+            result.Errors.Count.Should().Be(1);
+            result.Errors.Keys.Should().Contain(faultySemesterOne.Id.ToString());
+            result.Errors[faultySemesterOne.Id.ToString()].Length.Should().Be(1);
+
+            var errors = result.Errors[faultySemesterOne.Id.ToString()];
+
+            var sb = new StringBuilder();
+            sb.AppendLine("Module: Test module verwacht dat de volgende groep modules aanwezig is in de voorgaande semesters:");
+            sb.AppendLine();
+            sb.AppendLine("Groep 1:");
+            sb.AppendLine($"- {_testModules.OoSoftwareDesignDevelopment.Name} niet gevonden.");
+            sb.AppendLine($"- {_testModules.WebDevelopment.Name} niet gevonden.");
+            sb.AppendLine($"- {_testModules.BedrijfsProcessenDynamischeWebapps.Name} gevonden.");
 
             errors[0].Should()
                 .Be(sb.ToString());
@@ -596,6 +665,78 @@ namespace HBOICTKeuzewijzer.Tests.Services
                 .Be(sb.ToString());
         }
 
+        [Fact]
+        public async Task ValidateRoute_ReturnValidationError_WhenRouteDoesNotMeetModuleLevelRequirementsEvenIfLastOneMatches()
+        {
+            // Arrange
+            var invalidRoute = _fixture.Build<StudyRoute>()
+                .Without(s => s.ApplicationUser)
+                .Without(s => s.Semesters)
+                .Create();
+
+            var faultySemesterOne = TestHelpers.CreateSemester(0, new Module
+            {
+                Name = "Test module",
+                PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
+                {
+                    ModuleLevelRequirementGroups = [
+                        new ModuleLevelRequirementGroup
+                        {
+                            ModuleLevelRequirements = [
+                                new ModuleLevelRequirement
+                                {
+                                    Level = 2
+                                },
+                                new ModuleLevelRequirement
+                                {
+                                    Level = 2
+                                },
+                                new ModuleLevelRequirement
+                                {
+                                    Level = 1
+                                }
+                            ]
+                        }
+                    ]
+                })
+            });
+
+            invalidRoute.Semesters = new List<Semester>();
+            invalidRoute.Semesters.Add(TestHelpers.CreateSemester(0, _testModules.BedrijfsProcessenDynamischeWebapps, 30));
+            invalidRoute.Semesters.Add(TestHelpers.CreateSemester(0, _testModules.BeherenVanEenVerandertraject, 20));
+            invalidRoute.Semesters.Add(faultySemesterOne);
+
+            var sut = new StudyRouteValidationService([new ModuleLevelRequirementRule()]);
+
+            // Act
+            var result = await sut.ValidateRoute(invalidRoute);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Errors.Should().NotBeNull();
+            result.Errors.Count.Should().Be(1);
+            result.Errors.Keys.Should().Contain(faultySemesterOne.Id.ToString());
+            result.Errors[faultySemesterOne.Id.ToString()].Length.Should().Be(1);
+
+            var errors = result.Errors[faultySemesterOne.Id.ToString()];
+
+            var sb = new StringBuilder();
+            sb.AppendLine("Module: Test module verwacht dat de volgende groep module niveaus aanwezig is in de voorgaande semesters:");
+            sb.AppendLine();
+            sb.AppendLine("Groep 1:");
+            sb.AppendLine("- Niveau 2 niet gevonden.");
+            sb.AppendLine("- Niveau 2 niet gevonden.");
+            sb.AppendLine("- Niveau 1 gevonden.");
+            
+            errors[0].Should()
+                .Be(sb.ToString());
+        }
+
+        /// <summary>
+        /// Sanity check if valid routes are still being accepted with all rules implemented.
+        /// </summary>
+        /// <param name="studyRoute"></param>
+        /// <returns></returns>
         [Theory]
         [ClassData(typeof(ValidStudyRouteData))]
         public async Task ValidateStudyRoute_ReturnNull_WithValidStudyRoutes(StudyRoute studyRoute)
@@ -610,6 +751,10 @@ namespace HBOICTKeuzewijzer.Tests.Services
             result.Should().BeNull();
         }
 
+        /// <summary>
+        /// Sanity check if each type of rule still writes an error when they are all supposed to.
+        /// </summary>
+        /// <returns></returns>
         [Fact]
         public async Task ValidateRoute_ReturnsAllValidationErrors_WhenRouteViolatesAllRules()
         {
@@ -622,7 +767,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
             // Module that violates all rules
             var faultySemesterOne = TestHelpers.CreateSemester(0, new Module
             {
-                Name = "Comprehensive Test Module",
+                Name = "Comprehensive Test Module one",
                 Level = 2,
                 ECs = 30,
                 PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
@@ -646,7 +791,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
                                 },
                                 new ModuleLevelRequirement
                                 {
-                                    Level = 1
+                                    Level = 2
                                 }
                             ]
                         },
@@ -670,7 +815,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
 
             var faultySemesterTwo = TestHelpers.CreateSemester(0, new Module
             {
-                Name = "Comprehensive Test Module",
+                Name = "Comprehensive Test Module two",
                 Level = 2,
                 ECs = 30,
                 PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
@@ -730,7 +875,46 @@ namespace HBOICTKeuzewijzer.Tests.Services
             // Act
             var result = await sut.ValidateRoute(invalidRoute);
 
-            var temp = JsonConvert.SerializeObject(result.Errors);
+            // Assert
+            result.Should().NotBeNull();
+            result.Errors.Should().NotBeNull();
+            result.Errors.Count.Should().Be(2);
+
+            result.Errors.Keys.Should().Contain(faultySemesterOne.Id.ToString());
+            result.Errors[faultySemesterOne.Id.ToString()].Length.Should().Be(5);
+            var errorsSemesterOne = result.Errors[faultySemesterOne.Id.ToString()];
+            errorsSemesterOne[0].Should().Be($"Module: {faultySemesterOne.Module!.Name} verwacht een voltooide propedeuse, minimaal 60 ec's behaald in de P fase, huidige ec's 30.");
+            errorsSemesterOne[1].Should().Be($"Module: {faultySemesterOne.Module!.Name} kan alleen plaatsvinden in semester 1.");
+            errorsSemesterOne[2].Should().Be($"Module: {faultySemesterOne.Module!.Name} verwacht dat uit voorgaande modules minimaal 60 ec zijn behaald, huidige behaalde ec's is 30.");
+            errorsSemesterOne[3].Should().Be($"Module: {faultySemesterOne.Module!.Name} verwacht dat uit propedeuse minimaal 60 ec zijn behaald, huidige behaalde ec's is 30.");
+
+            var sbSemesterOne = new StringBuilder();
+            sbSemesterOne.AppendLine($"Module: {faultySemesterOne.Module!.Name} verwacht dat een van de volgende groepen module niveaus aanwezig is in de voorgaande semesters:");
+            sbSemesterOne.AppendLine();
+            sbSemesterOne.AppendLine("Groep 1:");
+            sbSemesterOne.AppendLine("- Niveau 1 gevonden.");
+            sbSemesterOne.AppendLine("- Niveau 2 niet gevonden.");
+            sbSemesterOne.AppendLine();
+            sbSemesterOne.AppendLine("Groep 2:");
+            sbSemesterOne.AppendLine("- Niveau 1 wel gevonden maar gevonden voldoet niet aan de behaalde ec eis van 30.");
+
+            errorsSemesterOne[4].Should().Be(sbSemesterOne.ToString());
+
+            result.Errors.Keys.Should().Contain(faultySemesterOne.Id.ToString());
+            result.Errors[faultySemesterTwo.Id.ToString()].Length.Should().Be(4);
+            var errorsSemesterTwo = result.Errors[faultySemesterTwo.Id.ToString()];
+            errorsSemesterTwo[0].Should().Be($"Module: {faultySemesterTwo.Module!.Name} verwacht een voltooide propedeuse, minimaal 60 ec's behaald in de P fase, huidige ec's 30.");
+            errorsSemesterTwo[1].Should().Be($"Module: {faultySemesterTwo.Module!.Name} kan alleen plaatsvinden in semester 1.");
+            errorsSemesterTwo[2].Should().Be($"Module: {faultySemesterTwo.Module!.Name} verwacht dat uit propedeuse minimaal 60 ec zijn behaald, huidige behaalde ec's is 30.");
+            
+            var sbSemesterTwo = new StringBuilder();
+            sbSemesterTwo.AppendLine($"Module: {faultySemesterTwo.Module!.Name} verwacht dat de volgende groep modules aanwezig is in de voorgaande semesters:");
+            sbSemesterTwo.AppendLine();
+            sbSemesterTwo.AppendLine("Groep 1:");
+            sbSemesterTwo.AppendLine("- Web Development niet gevonden.");
+            sbSemesterTwo.AppendLine("- Management of IT niet gevonden.");
+
+            errorsSemesterTwo[3].Should().Be(sbSemesterTwo.ToString());
         }
     }
 }
