@@ -65,6 +65,14 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 
             return CreatedAtAction("GetCategory", new { id = category.Id }, category);
         }
+        
+        [HttpGet("paginated")]
+        [EnumAuthorize(Role.SystemAdmin, Role.ModuleAdmin)]
+        public async Task<ActionResult<PaginatedResult<Category>>> GetPaginatedCategories([FromQuery] GetAllRequestQuery request)
+        {
+            var result = await _categoryRepo.GetPaginatedAsync(request);
+            return Ok(result);
+        }
 
         // DELETE: api/Category/5
         [HttpDelete("{id}")]
