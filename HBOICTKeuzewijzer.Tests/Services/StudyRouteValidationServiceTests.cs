@@ -483,24 +483,116 @@ namespace HBOICTKeuzewijzer.Tests.Services
             result.Errors.Should().NotBeNull();
             result.Errors.Count.Should().Be(1);
             result.Errors.Keys.Should().Contain(faultySemesterOne.Id.ToString());
-            result.Errors[faultySemesterOne.Id.ToString()].Length.Should().Be(2);
+            result.Errors[faultySemesterOne.Id.ToString()].Length.Should().Be(1);
 
             var errors = result.Errors[faultySemesterOne.Id.ToString()];
-            errors[0].Should()
-                .Be($"Module: {faultySemesterOne.Module!.Name} verwacht dat uit module '{_testModules.BedrijfsProcessenDynamischeWebapps.Name}' minimaal 30 ec zijn behaald, huidige behaalde ec's is 20");
 
             var sb = new StringBuilder();
             sb.AppendLine("Module: Test module verwacht dat een van de volgende groepen modules aanwezig is in de voorgaande semesters:");
             sb.AppendLine();
             sb.AppendLine("Groep 1:");
-            sb.AppendLine($"- {_testModules.OoSoftwareDesignDevelopment.Name}");
-            sb.AppendLine($"- {_testModules.WebDevelopment.Name}");
+            sb.AppendLine($"- {_testModules.OoSoftwareDesignDevelopment.Name} niet gevonden.");
+            sb.AppendLine($"- {_testModules.WebDevelopment.Name} niet gevonden.");
             sb.AppendLine();
             sb.AppendLine("Groep 2:");
-            sb.AppendLine($"- {_testModules.OoSoftwareDesignDevelopment.Name}");
-            sb.AppendLine($"- {_testModules.QualitySoftwareDevelopment.Name}");
+            sb.AppendLine($"- {_testModules.OoSoftwareDesignDevelopment.Name} niet gevonden.");
+            sb.AppendLine($"- {_testModules.QualitySoftwareDevelopment.Name} niet gevonden.");
+            sb.AppendLine($"- {_testModules.BedrijfsProcessenDynamischeWebapps.Name} wel gevonden maar voldoet niet aan de behaalde ec eis van 30.");
 
-            errors[1].Should()
+            errors[0].Should()
+                .Be(sb.ToString());
+        }
+
+        [Fact]
+        public async Task ValidateRoute_ReturnValidationError_WhenRouteDoesNotMeetModuleLevelRequirements()
+        {
+            // Arrange
+            var invalidRoute = _fixture.Build<StudyRoute>()
+                .Without(s => s.ApplicationUser)
+                .Without(s => s.Semesters)
+                .Create();
+
+            var faultySemesterOne = TestHelpers.CreateSemester(0, new Module
+            {
+                Name = "Test module",
+                PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
+                {
+                    ModuleLevelRequirementGroups = [
+                        new ModuleLevelRequirementGroup
+                        {
+                            ModuleLevelRequirements = [
+                                new ModuleLevelRequirement
+                                {
+                                    Level = 1
+                                },
+                                new ModuleLevelRequirement
+                                {
+                                    Level = 1
+                                },
+                                new ModuleLevelRequirement
+                                {
+                                    Level = 1
+                                }
+                            ]
+                        },
+                        new ModuleLevelRequirementGroup
+                        {
+                            ModuleLevelRequirements = [
+                                new ModuleLevelRequirement
+                                {
+                                    Level = 1,
+                                    EcRequirement = new EcRequirement
+                                    {
+                                        RequiredAmount = 30
+                                    }
+                                },
+                                new ModuleLevelRequirement
+                                {
+                                    Level = 1,
+                                    EcRequirement = new EcRequirement
+                                    {
+                                        RequiredAmount = 30
+                                    }
+                                }
+                            ]
+                        },
+                    ]
+                })
+            });
+
+            invalidRoute.Semesters = new List<Semester>();
+            invalidRoute.Semesters.Add(TestHelpers.CreateSemester(0, _testModules.BedrijfsProcessenDynamischeWebapps, 30));
+            invalidRoute.Semesters.Add(TestHelpers.CreateSemester(0, _testModules.BeherenVanEenVerandertraject, 20));
+            invalidRoute.Semesters.Add(faultySemesterOne);
+
+            var sut = new StudyRouteValidationService([new ModuleLevelRequirementRule()]);
+
+            // Act
+            var result = await sut.ValidateRoute(invalidRoute);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Errors.Should().NotBeNull();
+            result.Errors.Count.Should().Be(1);
+            result.Errors.Keys.Should().Contain(faultySemesterOne.Id.ToString());
+            result.Errors[faultySemesterOne.Id.ToString()].Length.Should().Be(1);
+
+            var errors = result.Errors[faultySemesterOne.Id.ToString()];
+
+            var sb = new StringBuilder();
+            sb.AppendLine("Module: Test module verwacht dat een van de volgende groepen module niveaus aanwezig is in de voorgaande semesters:");
+            sb.AppendLine();
+            sb.AppendLine("Groep 1:");
+            sb.AppendLine("- Niveau 1 gevonden.");
+            sb.AppendLine("- Niveau 1 gevonden.");
+            sb.AppendLine("- Niveau 1 niet gevonden.");
+            sb.AppendLine();
+            sb.AppendLine("Groep 2:");
+            sb.AppendLine("- Niveau 1 gevonden.");
+            sb.AppendLine("- Niveau 1 wel gevonden maar gevonden voldoet niet aan de behaalde ec eis van 30.");
+
+
+            errors[0].Should()
                 .Be(sb.ToString());
         }
 
@@ -516,6 +608,129 @@ namespace HBOICTKeuzewijzer.Tests.Services
 
             // Assert
             result.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task ValidateRoute_ReturnsAllValidationErrors_WhenRouteViolatesAllRules()
+        {
+            // Arrange
+            var invalidRoute = _fixture.Build<StudyRoute>()
+                .Without(s => s.ApplicationUser)
+                .Without(s => s.Semesters)
+                .Create();
+
+            // Module that violates all rules
+            var faultySemesterOne = TestHelpers.CreateSemester(0, new Module
+            {
+                Name = "Comprehensive Test Module",
+                Level = 2,
+                ECs = 30,
+                PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
+                {
+                    Propaedeutic = true,
+                    SemesterConstraint = SemesterConstraint.Second,
+                    EcRequirements = new List<EcRequirement>
+                    {
+                        new EcRequirement { RequiredAmount = 60 },
+                        new EcRequirement { RequiredAmount = 60, Propaedeutic = true }
+                    },
+                    ModuleLevelRequirementGroups =
+                    [
+                        new ModuleLevelRequirementGroup
+                        {
+                            ModuleLevelRequirements =
+                            [
+                                new ModuleLevelRequirement
+                                {
+                                    Level = 1
+                                },
+                                new ModuleLevelRequirement
+                                {
+                                    Level = 1
+                                }
+                            ]
+                        },
+                        new ModuleLevelRequirementGroup
+                        {
+                            ModuleLevelRequirements =
+                            [
+                                new ModuleLevelRequirement
+                                {
+                                    Level = 1,
+                                    EcRequirement = new EcRequirement
+                                    {
+                                        RequiredAmount = 30
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                })
+            });
+
+            var faultySemesterTwo = TestHelpers.CreateSemester(0, new Module
+            {
+                Name = "Comprehensive Test Module",
+                Level = 2,
+                ECs = 30,
+                PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
+                {
+                    Propaedeutic = true,
+                    SemesterConstraint = SemesterConstraint.Second,
+                    EcRequirements = new List<EcRequirement>
+                    {
+                        new EcRequirement { RequiredAmount = 60 },
+                        new EcRequirement { RequiredAmount = 60, Propaedeutic = true }
+                    },
+                    ModuleRequirementGroups =
+                    [
+                        new ModuleRequirementGroup
+                        {
+                            ModuleRequirements =
+                            [
+                                new ModuleRequirement
+                                {
+                                    RelevantModuleId = _testModules.WebDevelopment.Id
+                                },
+                                new ModuleRequirement
+                                {
+                                    RelevantModuleId = _testModules.ManagementOfIt.Id,
+                                    EcRequirement = new EcRequirement
+                                    {
+                                        RequiredAmount = 30
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                })
+            });
+
+            invalidRoute.Semesters = new List<Semester>
+            {
+                // These will partially satisfy things but still fail on each rule
+                TestHelpers.CreateSemester(0, _testModules.BedrijfsProcessenDynamischeWebapps, 20),
+                TestHelpers.CreateSemester(0, _testModules.BeherenVanEenVerandertraject, 10),
+                faultySemesterOne,
+                faultySemesterTwo
+            };
+
+            var sut = new StudyRouteValidationService([
+                new PropaedeuticRule(),
+                new SemesterConstraintRule(),
+                new EcRequirementRule(),
+                new ModuleRequirementRule(id =>
+                {
+                    var module = _testModules.GetById(id);
+                    return Task.FromResult<Module?>(module);
+                }),
+                new ModuleLevelRequirementRule()
+            ]);
+
+            // Act
+            var result = await sut.ValidateRoute(invalidRoute);
+
+            var temp = JsonConvert.SerializeObject(result.Errors);
         }
     }
 }
@@ -665,7 +880,6 @@ public class ValidStudyRouteData : IEnumerable<object[]>
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }
-
 
 public class TestModules
 {
@@ -948,11 +1162,19 @@ public class TestModules
                         ModuleLevelRequirements = [
                             new ModuleLevelRequirement
                             {
-                                Level = 2
+                                Level = 2,
+                                EcRequirement = new EcRequirement
+                                {
+                                    RequiredAmount = 60
+                                }
                             },
                             new ModuleLevelRequirement
                             {
-                                Level = 2
+                                Level = 2,
+                                EcRequirement = new EcRequirement
+                                {
+                                    RequiredAmount = 60
+                                }
                             }
                         ]
                     }
@@ -988,11 +1210,19 @@ public class TestModules
                         ModuleLevelRequirements = [
                             new ModuleLevelRequirement
                             {
-                                Level = 2
+                                Level = 2,
+                                EcRequirement = new EcRequirement
+                                {
+                                    RequiredAmount = 60
+                                }
                             },
                             new ModuleLevelRequirement
                             {
-                                Level = 2
+                                Level = 2,
+                                EcRequirement = new EcRequirement
+                                {
+                                    RequiredAmount = 60
+                                }
                             }
                         ]
                     }
@@ -1076,11 +1306,19 @@ public class TestModules
                         ModuleLevelRequirements = [
                             new ModuleLevelRequirement
                             {
-                                Level = 2
+                                Level = 2,
+                                EcRequirement = new EcRequirement
+                                {
+                                    RequiredAmount = 60
+                                }
                             },
                             new ModuleLevelRequirement
                             {
-                                Level = 2
+                                Level = 2,
+                                EcRequirement = new EcRequirement
+                                {
+                                    RequiredAmount = 60
+                                }
                             }
                         ]
                     }
@@ -1164,11 +1402,19 @@ public class TestModules
                         ModuleLevelRequirements = [
                             new ModuleLevelRequirement
                             {
-                                Level = 2
+                                Level = 2,
+                                EcRequirement = new EcRequirement
+                                {
+                                    RequiredAmount = 60
+                                }
                             },
                             new ModuleLevelRequirement
                             {
-                                Level = 2
+                                Level = 2,
+                                EcRequirement = new EcRequirement
+                                {
+                                    RequiredAmount = 60
+                                }
                             }
                         ]
                     }

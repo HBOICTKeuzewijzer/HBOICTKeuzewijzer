@@ -4,6 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using HBOICTKeuzewijzer.Api.Repositories;
 using System.Text;
+using static HBOICTKeuzewijzer.Api.Services.StudyRouteValidation.ModuleRequirementRule;
+using System.Collections.Generic;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Linq;
 
 namespace HBOICTKeuzewijzer.Api.Services.StudyRouteValidation;
 
@@ -21,7 +25,8 @@ public class StudyRouteValidationService : IStudyRouteValidationService
             new PropaedeuticRule(),
             new PropaedeuticRule(),
             new EcRequirementRule(),
-            new ModuleRequirementRule(ModuleResolver)
+            new ModuleRequirementRule(ModuleResolver),
+            new ModuleLevelRequirementRule()
         };
     }
 
@@ -211,39 +216,172 @@ public class EcRequirementRule : StudyRouteValidationRuleBase
 
 public class ModuleLevelRequirementRule : StudyRouteValidationRuleBase
 {
+
     public override Task Validate(Semester currentSemester, List<Semester> previousSemesters, Dictionary<string, List<string>> errors)
     {
         if (!GetParsedPrerequisite(currentSemester, out var modulePrerequisite)) return Task.CompletedTask;
 
-        if (modulePrerequisite?.ModuleLevelRequirementGroups == null || modulePrerequisite.ModuleLevelRequirementGroups.Count == 0) return Task.CompletedTask;
+        if (modulePrerequisite?.ModuleLevelRequirementGroups == null || modulePrerequisite.ModuleLevelRequirementGroups.Count == 0)
+            return Task.CompletedTask;
 
-        foreach (var moduleLevelRequirementGroup in modulePrerequisite.ModuleLevelRequirementGroups)
+        var moduleName = currentSemester.Module!.Name;
+        var semesterId = currentSemester.Id.ToString();
+
+        var res = CheckAllGroups(previousSemesters, modulePrerequisite.ModuleLevelRequirementGroups, moduleName);
+
+        if (!res.AnyGroupPassed)
         {
-            if (moduleLevelRequirementGroup.ModuleLevelRequirements.Count == 0) continue;
-
-            foreach (var moduleLevelRequirement in moduleLevelRequirementGroup.ModuleLevelRequirements)
+            if (res.FailureResults.Count > 0)
             {
+                var sb = new StringBuilder();
 
+                sb.AppendLine($"Module: {moduleName} verwacht dat {(res.FailureResults.Count > 1 ? "een van de volgende groepen" : "de volgende groep")} module niveaus aanwezig is in de voorgaande semesters:");
+
+                for (int i = 0; i < res.FailureResults.Count; i++)
+                {
+                    var failureResult = res.FailureResults[i];
+
+                    sb.AppendLine();
+                    sb.AppendLine($"Groep {i + 1}:");
+
+                    foreach (var requirement in failureResult.Requirements)
+                    {
+                        if (failureResult.Failures.Any(g => requirement.Equals(g.LevelRequirement) && g.Missing))
+                        {
+                            // Requirement failed since it was missing
+                            sb.AppendLine($"- Niveau {requirement.Level} niet gevonden.");
+                        }
+                        else if (requirement.EcRequirement is not null && failureResult.Failures.Any(g => requirement.Equals(g.LevelRequirement)))
+                        {
+                            // Requirement failed on credits
+                            sb.AppendLine($"- Niveau {requirement.Level} wel gevonden maar gevonden voldoet niet aan de behaalde ec eis van {requirement.EcRequirement.RequiredAmount}.");
+                        }
+                        else
+                        {
+                            // Requirement did not fail
+                            sb.AppendLine($"- Niveau {requirement.Level} gevonden.");
+                        }
+                    }
+                }
+
+                AddError(sb.ToString(), semesterId, errors);
             }
         }
 
         return Task.CompletedTask;
     }
+
+    private GroupResult CheckGroup(List<ModuleLevelRequirement> levelRequirements, List<Semester> relevantSemesters, string moduleName)
+    {
+        var result = new GroupResult();
+        result.Requirements = levelRequirements;
+        var checkedModules = new List<Module>();
+
+        foreach (var levelRequirement in levelRequirements)
+        {
+            // Only consider modules not already used
+            var candidates = relevantSemesters
+                .Where(s => s.Module != null && s.Module.Level == levelRequirement.Level && !checkedModules.Contains(s.Module))
+                .Select(s => new { Semester = s, Module = s.Module! })
+                .ToList();
+
+
+            // No modules found for level 
+            if (candidates.Count == 0)
+            {
+                result.GroupPassed = false;
+                result.Failures.Add((levelRequirement, true));
+                continue;
+            }
+
+            var checkedModule = candidates.Last().Module;
+            if (levelRequirement.EcRequirement is not null)
+            {
+                bool matched = false;
+                foreach (var candidate in candidates)
+                {
+                    var semester = candidate.Semester;
+                    var module = candidate.Module;
+
+                    // If EC requirement is present, check if it's satisfied
+                    if (levelRequirement.EcRequirement is not null &&
+                        semester.AcquiredECs < levelRequirement.EcRequirement.RequiredAmount)
+                    {
+                        continue;
+                    }
+
+                    matched = true;
+                    checkedModule = module;
+                    break;
+                }
+
+                if (!matched)
+                {
+                    result.GroupPassed = false;
+                    result.Failures.Add((levelRequirement, false));
+                }
+                else
+                {
+                    result.GroupPassed = true;
+                }
+            }
+
+            checkedModules.Add(checkedModule);
+        }
+
+        return result;
+    }
+
+    private AllGroupsResult CheckAllGroups(List<Semester> previousSemesters, List<ModuleLevelRequirementGroup> levelGroups, string moduleName)
+    {
+        var result = new AllGroupsResult();
+
+        var semestersWithModules = previousSemesters.Where(s => s.Module is not null).ToList();
+
+        foreach (var levelGroup in levelGroups)
+        {
+            if (levelGroup.ModuleLevelRequirements.Count == 0) continue;
+
+            var res = CheckGroup(levelGroup.ModuleLevelRequirements, semestersWithModules, moduleName);
+
+            if (res.GroupPassed)
+            {
+                result.AnyGroupPassed = true;
+                break;
+            }
+
+            result.FailureResults.Add(res);
+        }
+
+        return result;
+    }
+
+    private class GroupResult
+    {
+        public List<ModuleLevelRequirement> Requirements { get; set; }
+        public List<(ModuleLevelRequirement LevelRequirement, bool Missing)> Failures { get; set; } = new();
+        public bool GroupPassed { get; set; }
+    }
+
+    private class AllGroupsResult
+    {
+        public List<GroupResult> FailureResults { get; set; } = new();
+        public bool AnyGroupPassed { get; set; }
+    }
 }
 
 public class ModuleRequirementRule(Func<Guid, Task<Module?>> moduleResolver) : StudyRouteValidationRuleBase
 {
-    internal class AllGroupsResult
+    private class AllGroupsResult
     {
-        public List<string> CollectedErrors { get; set; } = new();
-        public List<List<string>> MissingModuleGroups { get; set; } = new();
+        public List<GroupResult> FailureResults { get; set; } = new();
         public bool AnyGroupPassed { get; set; } = false;
     }
 
-    internal class GroupResult
+    private class GroupResult
     {
-        public List<string> MissingModules { get; set; } = new();
-        public List<string> GroupErrors { get; set; } = new();
+        public List<ModuleRequirement> Requirements { get; set; }
+        public List<(ModuleRequirement ModuleRequirement, bool Missing)> Failures { get; set; } = new();
         public bool GroupPassed { get; set; } = true;
     }
 
@@ -260,26 +398,35 @@ public class ModuleRequirementRule(Func<Guid, Task<Module?>> moduleResolver) : S
 
         if (!res.AnyGroupPassed)
         {
-            foreach (var error in res.CollectedErrors)
-            {
-                AddError(error, semesterId, errors);
-            }
-
-            if (res.MissingModuleGroups.Count != 0)
+            if (res.FailureResults.Count > 0)
             {
                 var sb = new StringBuilder();
 
-                sb.AppendLine($"Module: {moduleName} verwacht dat {(res.MissingModuleGroups.Count > 1 ? "een van de volgende groepen" : "de volgende groep")} modules aanwezig is in de voorgaande semesters:");
+                sb.AppendLine($"Module: {moduleName} verwacht dat {(res.FailureResults.Count > 1 ? "een van de volgende groepen" : "de volgende groep")} modules aanwezig is in de voorgaande semesters:");
 
-                for (int i = 0; i < res.MissingModuleGroups.Count; i++)
+                for (int i = 0; i < res.FailureResults.Count; i++)
                 {
-                    sb.AppendLine();
+                    var failureResult = res.FailureResults[i];
 
+                    sb.AppendLine();
                     sb.AppendLine($"Groep {i + 1}:");
 
-                    foreach (var name in res.MissingModuleGroups[i])
+                    foreach (var requirement in failureResult.Requirements)
                     {
-                        sb.AppendLine($"- {name}");
+                        var relevantModule = await moduleResolver(requirement.RelevantModuleId);
+                        
+                        if (failureResult.Failures.Any(g => requirement.Equals(g.ModuleRequirement) && g.Missing))
+                        {
+                            sb.AppendLine($"- {relevantModule?.Name ?? "Module"} niet gevonden.");
+                        }
+                        else if (requirement.EcRequirement is not null && failureResult.Failures.Any(g => requirement.Equals(g.ModuleRequirement)))
+                        {
+                            sb.AppendLine($"- {relevantModule?.Name ?? "Module"} wel gevonden maar voldoet niet aan de behaalde ec eis van {requirement.EcRequirement.RequiredAmount}.");
+                        }
+                        else
+                        {
+                            sb.AppendLine($"- {relevantModule?.Name ?? "Module"} gevonden.");
+                        }
                     }
                 }
 
@@ -291,18 +438,17 @@ public class ModuleRequirementRule(Func<Guid, Task<Module?>> moduleResolver) : S
     private async Task<GroupResult> CheckGroup(List<ModuleRequirement> moduleRequirements, List<Semester> relevantPreviousSemesters, string moduleName)
     {
         var result = new GroupResult();
+        result.Requirements = moduleRequirements;
 
         foreach (var moduleRequirement in moduleRequirements)
         {
-            var relevantModule = await moduleResolver(moduleRequirement.RelevantModuleId);
-
             var relevantSemester = relevantPreviousSemesters
                 .FirstOrDefault(s => s.Module!.Id == moduleRequirement.RelevantModuleId);
 
             if (relevantSemester == null)
             {
                 result.GroupPassed = false;
-                result.MissingModules.Add(relevantModule?.Name ?? "Module");
+                result.Failures.Add((moduleRequirement, true));
                 continue;
             }
 
@@ -310,7 +456,7 @@ public class ModuleRequirementRule(Func<Guid, Task<Module?>> moduleResolver) : S
                 relevantSemester.AcquiredECs < moduleRequirement.EcRequirement.RequiredAmount)
             {
                 result.GroupPassed = false;
-                result.GroupErrors.Add($"Module: {moduleName} verwacht dat uit module '{relevantModule?.Name}' minimaal {moduleRequirement.EcRequirement.RequiredAmount} ec zijn behaald, huidige behaalde ec's is {relevantSemester.AcquiredECs}");
+                result.Failures.Add((moduleRequirement, false));
             }
         }
 
@@ -335,8 +481,7 @@ public class ModuleRequirementRule(Func<Guid, Task<Module?>> moduleResolver) : S
                 break;
             }
 
-            result.MissingModuleGroups.Add(res.MissingModules);
-            result.CollectedErrors.AddRange(res.GroupErrors);
+            result.FailureResults.Add(res);
         }
 
         return result;
