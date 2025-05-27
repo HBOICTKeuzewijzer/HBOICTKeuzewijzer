@@ -5,7 +5,7 @@
 namespace HBOICTKeuzewijzer.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class addedread : Migration
+    public partial class chatrelatedchanges : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

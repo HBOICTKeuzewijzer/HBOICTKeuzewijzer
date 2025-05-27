@@ -16,6 +16,5 @@ namespace HBOICTKeuzewijzer.Api.Repositories
             GetAllRequestQuery request,
             params Expression<Func<T, object>>[] includes);
         IQueryable<T> Query();
-
     }
 }

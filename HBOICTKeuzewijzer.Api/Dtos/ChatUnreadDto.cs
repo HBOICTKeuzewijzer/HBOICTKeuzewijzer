@@ -2,7 +2,7 @@
 {
     public class ChatUnreadDto
     {
-        public Guid ChatId { get; set; } // Veranderde van int naar Guid
+        public Guid ChatId { get; set; }
         public bool HasUnread { get; set; }
     }
 }

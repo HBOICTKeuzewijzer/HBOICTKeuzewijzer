@@ -143,6 +143,5 @@ namespace HBOICTKeuzewijzer.Api.Repositories
         {
             return _dbSet.AsQueryable();
         }
-
     }
 }

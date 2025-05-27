@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HBOICTKeuzewijzer.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250515082755_slb-table")]
-    partial class slbtable
+    [Migration("20250527174734_chat-related-changes")]
+    partial class chatrelatedchanges
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -154,6 +154,12 @@ namespace HBOICTKeuzewijzer.Api.Migrations
 
                     b.Property<DateTime>("SentAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<bool>("SlbRead")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("StudentRead")
+                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 
