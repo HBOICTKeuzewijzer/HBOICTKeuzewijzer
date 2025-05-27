@@ -36,33 +36,29 @@ namespace HBOICTKeuzewijzer.Api.DAL
                 .IsUnique()
                 .HasDatabaseName("IX_Message_ChatId_SentAt");
 
-            // 🔥 Voeg juiste restrict toe aan *relatie met Sender*
             modelBuilder.Entity<Message>()
                 .HasOne(m => m.Sender)
                 .WithMany()
                 .HasForeignKey(m => m.SenderApplicationUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Optioneel: ook voor relatie met Chat
             modelBuilder.Entity<Message>()
                 .HasOne(m => m.Chat)
                 .WithMany(c => c.Messages)
                 .HasForeignKey(m => m.ChatId)
-                .OnDelete(DeleteBehavior.Cascade); // mag, zolang het maar niet dubbel op Sender gaat
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Slb>()
                 .HasOne(s => s.SlbApplicationUser)
                 .WithMany()
                 .HasForeignKey(s => s.SlbApplicationUserId)
-                .OnDelete(DeleteBehavior.Restrict); // Bij Slb verwijderen moet je handmatig de relaties verwijderen
+                .OnDelete(DeleteBehavior.Restrict); // When removing slb need to manually remove
 
             modelBuilder.Entity<Slb>()
                 .HasOne(s => s.StudentApplicationUser)
                 .WithMany()
                 .HasForeignKey(s => s.StudentApplicationUserId)
-                .OnDelete(DeleteBehavior.Cascade); // Bij Student verwijderen wordt ook de relatie tussen Slb - Student verwijderd
-
+                .OnDelete(DeleteBehavior.Cascade); // When deleting studend also deletes relation with SLB
         }
-
     }
 }
