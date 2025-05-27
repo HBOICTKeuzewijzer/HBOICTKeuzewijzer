@@ -74,7 +74,5 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 
             return Ok(new { Id = id, Roles = roles.Select(r => r.ToString()).ToList() });
         }
-
-
     }
 }
