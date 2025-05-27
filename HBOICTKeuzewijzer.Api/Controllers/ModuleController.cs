@@ -14,7 +14,6 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         private readonly IRepository<Module> _moduleRepo;
         private readonly ApplicationUserService _userService;
 
-
         public ModuleController(IRepository<Module> moduleRepo, ApplicationUserService userService)
         {
             _moduleRepo = moduleRepo;

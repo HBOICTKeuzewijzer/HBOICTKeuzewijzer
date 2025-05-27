@@ -152,6 +152,12 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                     b.Property<DateTime>("SentAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("SlbRead")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("StudentRead")
+                        .HasColumnType("bit");
+
                     b.HasKey("Id");
 
                     b.HasIndex("SenderApplicationUserId");

@@ -11,7 +11,6 @@ namespace HBOICTKeuzewijzer.Api.Repositories
         Task UpdateAsync(T entity);
         Task DeleteAsync(Guid id);
         Task<bool> ExistsAsync(Guid id);
-        IQueryable<T> Queryable();
         Task<IEnumerable<T>> GetAllIncludingAsync(params Expression<Func<T, object>>[] includes);
         Task<PaginatedResult<T>> GetPaginatedAsync(
             GetAllRequestQuery request,
