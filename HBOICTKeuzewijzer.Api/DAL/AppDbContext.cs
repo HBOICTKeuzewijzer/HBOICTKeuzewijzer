@@ -15,7 +15,7 @@ namespace HBOICTKeuzewijzer.Api.DAL
         public DbSet<Semester> Semesters { get; set; } = null!;
         public DbSet<StudyRoute> StudyRoutes { get; set; } = null!;
         public DbSet<Slb> Slb { get; set; } = null!;
-
+        public DbSet<CustomModule> CustomModules { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -35,6 +35,20 @@ namespace HBOICTKeuzewijzer.Api.DAL
                 .HasIndex(m => new { m.ChatId, m.SentAt })
                 .IsUnique()
                 .HasDatabaseName("IX_Message_ChatId_SentAt");
+
+            // Chats can be important to students so we don't want to just delete them
+            modelBuilder.Entity<Chat>()
+                .HasOne(c => c.SLB)
+                .WithMany()
+                .HasForeignKey(c => c.SlbApplicationUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Chats with no student are not relevant for SLB'ers so we delete them
+            modelBuilder.Entity<Chat>()
+                .HasOne(c => c.Student)
+                .WithMany()
+                .HasForeignKey(c => c.StudentApplicationUserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Message>()
                 .HasOne(m => m.Sender)
@@ -59,6 +73,36 @@ namespace HBOICTKeuzewijzer.Api.DAL
                 .WithMany()
                 .HasForeignKey(s => s.StudentApplicationUserId)
                 .OnDelete(DeleteBehavior.Cascade); // When deleting studend also deletes relation with SLB
+
+            modelBuilder.Entity<Semester>()
+                .HasOne(s => s.StudyRoute)
+                .WithMany(s => s.Semesters)
+                .HasForeignKey(s => s.StudyRouteId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CustomModule>()
+                .HasOne(c => c.Semester)
+                .WithOne(s => s.CustomModule)
+                .HasForeignKey<Semester>(s => s.CustomModuleId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<StudyRoute>()
+                .HasOne(s => s.ApplicationUser)
+                .WithMany(a => a.StudyRoutes)
+                .HasForeignKey(a => a.ApplicationUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Semester>()
+                .HasOne(s => s.Module)
+                .WithMany(m => m.Semesters)
+                .HasForeignKey(s => s.ModuleId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<ApplicationUserRole>()
+                .HasOne(a => a.ApplicationUser)
+                .WithMany(a => a.ApplicationUserRoles)
+                .HasForeignKey(a => a.ApplicationUserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

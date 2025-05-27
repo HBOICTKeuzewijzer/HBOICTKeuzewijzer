@@ -22,7 +22,7 @@ namespace HBOICTKeuzewijzer.Api.Models
         public Guid? CustomModuleId { get; set; }
 
         [ForeignKey(nameof(CustomModuleId))]
-        public CustomModule? CutomModule { get; set; }
+        public CustomModule? CustomModule { get; set; }
 
         [Required]
         public Guid StudyRouteId { get; set; }
@@ -30,5 +30,4 @@ namespace HBOICTKeuzewijzer.Api.Models
         [ForeignKey(nameof(StudyRouteId))]
         public StudyRoute? StudyRoute { get; set; }
     }
-
 }

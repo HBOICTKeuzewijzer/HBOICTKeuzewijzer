@@ -17,5 +17,7 @@ namespace HBOICTKeuzewijzer.Api.Models
 
         [Required] 
         public int ECs { get; set; } = 30;
+
+        public Semester? Semester { get; set; }
     }
 }

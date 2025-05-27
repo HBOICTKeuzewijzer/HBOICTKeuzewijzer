@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
 
 namespace HBOICTKeuzewijzer.Api.Models
 {
@@ -35,7 +34,6 @@ namespace HBOICTKeuzewijzer.Api.Models
         public int? RequiredSemester { get; set; }
 
         [ForeignKey(nameof(CategoryId))]
-        
         public Category? Category { get; set; }
 
         public Guid? CategoryId { get; set; }
