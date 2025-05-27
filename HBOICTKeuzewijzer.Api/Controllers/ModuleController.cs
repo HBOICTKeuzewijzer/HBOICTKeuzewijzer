@@ -2,6 +2,7 @@
 using HBOICTKeuzewijzer.Api.Models;
 using HBOICTKeuzewijzer.Api.Repositories;
 using HBOICTKeuzewijzer.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -95,15 +96,12 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 
         // POST: api/Module
         [HttpPost]
-        [EnumAuthorize(Role.ModuleAdmin, Role.SystemAdmin)]
         public async Task<ActionResult<Module>> PostModule(Module module)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-
-            var user = await _userService.GetOrCreateUserAsync(User);
 
             await _moduleRepo.AddAsync(module);
 
