@@ -2,12 +2,11 @@
 using FluentAssertions;
 using HBOICTKeuzewijzer.Api.Models;
 using HBOICTKeuzewijzer.Api.Models.OerRequirements;
+using HBOICTKeuzewijzer.Api.Services.StudyRouteValidation;
+using HBOICTKeuzewijzer.Api.Services.StudyRouteValidation.Validators;
 using Newtonsoft.Json;
 using System.Collections;
-using HBOICTKeuzewijzer.Api.Services.StudyRouteValidation;
 using System.Text;
-using HBOICTKeuzewijzer.Api.Services.StudyRouteValidation.Validators;
-using static HBOICTKeuzewijzer.Api.Services.StudyRouteValidation.StudyRouteValidationService;
 
 namespace HBOICTKeuzewijzer.Tests.Services
 {
@@ -753,7 +752,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
 
             var sut = new StudyRouteValidationService(new List<IStudyRouteValidationRule>
             {
-                new YearRequirement()
+                new YearRequirementRule()
             });
 
             var result = sut.ValidateRoute(route).GetAwaiter().GetResult();
