@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HBOICTKeuzewijzer.Api.Models
 {
-    public class Chat
+    public class Chat : IEntity
     {
         [Key]
         public Guid Id { get; set; }

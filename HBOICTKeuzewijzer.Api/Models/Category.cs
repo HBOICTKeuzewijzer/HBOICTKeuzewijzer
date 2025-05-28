@@ -2,7 +2,7 @@
 
 namespace HBOICTKeuzewijzer.Api.Models
 {
-    public class Category
+    public class Category : IEntity
     {
         [Key]
         public Guid Id { get; set; }

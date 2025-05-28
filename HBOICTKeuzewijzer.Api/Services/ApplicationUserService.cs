@@ -51,15 +51,6 @@ namespace HBOICTKeuzewijzer.Api.Services
             return user;
         }
 
-        public async Task<ApplicationUser?> GetByPrincipal(ClaimsPrincipal principal)
-        {
-            var externalId = GetExternalId(principal);
-
-            return await appDbContext.ApplicationUsers
-                .Include(u => u.ApplicationUserRoles)
-                .FirstOrDefaultAsync(u => u.ExternalId == externalId);
-        }
-
         private static string GetExternalId(ClaimsPrincipal principal)
         {
             var id = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -105,7 +96,7 @@ namespace HBOICTKeuzewijzer.Api.Services
                 appDbContext.ApplicationUserRoles.Add(new ApplicationUserRole
                 {
                     Role = role,
-                    ApplicationUsers = user
+                    ApplicationUser = user
                 });
             }
 
@@ -120,6 +111,27 @@ namespace HBOICTKeuzewijzer.Api.Services
             }
         }
 
-    }
+        public async Task<ApplicationUser?> GetByPrincipal(ClaimsPrincipal principal)
+        {
+            var externalId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
+            if (string.IsNullOrWhiteSpace(externalId))
+                throw new InvalidOperationException("Missing external user ID.");
+
+            return await appDbContext.ApplicationUsers
+                .Include(u => u.ApplicationUserRoles)
+                .FirstOrDefaultAsync(u => u.ExternalId == externalId);
+        }
+        public async Task<ApplicationUser?> GetByEmailAsync(string email)
+        {
+            return await appDbContext.ApplicationUsers
+                .FirstOrDefaultAsync(u => u.Email == email);
+        }
+        public async Task<ApplicationUser?> GetUserWithRolesByIdAsync(Guid id)
+        {
+            return await appDbContext.ApplicationUsers
+                .Include(u => u.ApplicationUserRoles)
+                .FirstOrDefaultAsync(u => u.Id == id);
+        }
+    }
 }

@@ -70,13 +70,6 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             return Ok(result);
         }
 
-        /// <summary>
-        /// Adds a relationship between an SLB counselor and a student.
-        /// Accessible only to administrators.
-        /// </summary>
-        /// <param name="slbId">The ID of the SLB counselor.</param>
-        /// <param name="studentId">The ID of the student.</param>
-        /// <returns>204 NoContent on success, or an error message on failure.</returns>
         [HttpPut("{slbId:guid}/{studentId:guid}")]
         [EnumAuthorize(Role.SystemAdmin)]
         public async Task<IActionResult> AddStudent(Guid slbId, Guid studentId)

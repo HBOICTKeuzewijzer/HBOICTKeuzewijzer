@@ -80,7 +80,7 @@ namespace HBOICTKeuzewijzer.Api
             services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(config.GetConnectionString("Default")));
 
-            services.AddScoped<IApplicationUserService, ApplicationUserService>();
+            services.AddScoped<IApplicationUserService>();
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddScoped<IStudyRouteRepository, StudyRouteRepository>();
             services.AddScoped<IModuleRepository, ModuleRepository>();
@@ -124,6 +124,8 @@ namespace HBOICTKeuzewijzer.Api
             app.UseAuthorization();
 
             app.MapControllers();
+
+            app.UseStaticFiles();
         }
     }
 }

@@ -80,13 +80,22 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<Message>> Create(Guid chatId, [FromBody] Message message)
         {
-            // Ensure the user is allowed to view the messages
             var chat = await GetAuthorizedChat(chatId);
             if (chat == null) return NotFound();
 
-            // Set the current chatID
             message.ChatId = chatId;
             message.SentAt = DateTime.Now;
+
+            var user = await _userService.GetOrCreateUserAsync(User);
+            if (chat.SlbApplicationUserId == user.Id)
+            {
+                message.SlbRead = true;
+            }
+            else if (chat.StudentApplicationUserId == user.Id)
+            {
+                message.StudentRead = true;
+            }
+
             await _messageRepository.AddAsync(message);
 
             return CreatedAtAction(nameof(Create), new { chatId, id = message.Id }, message);

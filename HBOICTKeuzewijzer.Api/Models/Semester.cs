@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HBOICTKeuzewijzer.Api.Models
 {
-    public class Semester
+    public class Semester : IEntity
     {
         [Key]
         public Guid Id { get; set; }
@@ -19,11 +19,15 @@ namespace HBOICTKeuzewijzer.Api.Models
         [ForeignKey(nameof(ModuleId))]
         public Module? Module { get; set; }
 
+        public Guid? CustomModuleId { get; set; }
+
+        [ForeignKey(nameof(CustomModuleId))]
+        public CustomModule? CustomModule { get; set; }
+
         [Required]
         public Guid StudyRouteId { get; set; }
 
         [ForeignKey(nameof(StudyRouteId))]
         public StudyRoute? StudyRoute { get; set; }
     }
-
 }

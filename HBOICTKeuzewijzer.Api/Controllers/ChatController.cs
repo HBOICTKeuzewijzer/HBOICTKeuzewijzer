@@ -3,6 +3,8 @@ using HBOICTKeuzewijzer.Api.Repositories;
 using HBOICTKeuzewijzer.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using HBOICTKeuzewijzer.Api.Dtos;
+
 
 namespace HBOICTKeuzewijzer.Api.Controllers
 {
@@ -93,10 +95,151 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         {
             var (user, chat) = await GetAuthorizedChat(id);
             if (chat == null) return NotFound();
-
+                
             await _chatRepository.DeleteAsync(id);
             return NoContent();
         }
+
+        [HttpGet("has-unread")]
+        public async Task<ActionResult<List<ChatUnreadDto>>> HasUnreadMessages()
+        {
+            var user = await _userService.GetOrCreateUserAsync(User);
+
+            var isSlb = await _chatRepository.Query().AnyAsync(c => c.SlbApplicationUserId == user.Id);
+            var isStudent = await _chatRepository.Query().AnyAsync(c => c.StudentApplicationUserId == user.Id);
+
+            if (!isSlb && !isStudent)
+            {
+                return Ok(new List<ChatUnreadDto>());
+            }
+
+            var chats = await _chatRepository.Query()
+                .Where(c => (isSlb && c.SlbApplicationUserId == user.Id) ||
+                            (isStudent && c.StudentApplicationUserId == user.Id))
+                .Select(chat => new ChatUnreadDto
+                {
+                    ChatId = chat.Id,
+                    HasUnread = isSlb
+                        ? chat.Messages.Any(m => !m.SlbRead)
+                        : chat.Messages.Any(m => !m.StudentRead)
+                })
+                .ToListAsync();
+
+            return Ok(chats);
+        }
+
+        [HttpPut("mark-as-read/{chatId}")]
+        public async Task<IActionResult> MarkChatAsRead(Guid chatId)
+        {
+            var user = await _userService.GetOrCreateUserAsync(User);
+
+            var isSlb = await _chatRepository.Query().AnyAsync(c => c.SlbApplicationUserId == user.Id);
+            var isStudent = await _chatRepository.Query().AnyAsync(c => c.StudentApplicationUserId == user.Id);
+
+            if (!isSlb && !isStudent)
+            {
+                return BadRequest("De gebruiker heeft geen toegang tot deze chat.");
+            }
+
+            var chat = await _chatRepository.Query()
+                .Include(c => c.Messages) 
+                .Where(c => c.Id == chatId &&
+                            ((isSlb && c.SlbApplicationUserId == user.Id) ||
+                             (isStudent && c.StudentApplicationUserId == user.Id)))
+                .FirstOrDefaultAsync();
+
+            if (chat == null)
+            {
+                return NotFound("Chat niet gevonden.");
+            }
+
+            if (isSlb)
+            {
+                chat.Messages
+                    .Where(m => !m.SlbRead)
+                    .ToList()
+                    .ForEach(m => m.SlbRead = true);
+            }
+            else if (isStudent)
+            {
+                chat.Messages
+                    .Where(m => !m.StudentRead)
+                    .ToList()
+                    .ForEach(m => m.StudentRead = true);
+            }
+
+            await _chatRepository.UpdateAsync(chat);
+
+            return NoContent();
+        }
+        [HttpPost("create")]
+        public async Task<ActionResult<Chat>> CreateWithEmail([FromQuery] string email)
+        {
+            var otherUser = await _userService.GetByEmailAsync(email);
+            if (otherUser == null)
+            {
+                return NotFound($"User with email '{email}' not found.");
+            }
+
+            var currentUser = await _userService.GetOrCreateUserAsync(User);
+
+            if (currentUser.Id == otherUser.Id)
+            {
+                return BadRequest("Cannot create a chat with yourself.");
+            }
+
+            var currentUserWithRoles = await _userService.GetUserWithRolesByIdAsync(currentUser.Id);
+            var otherUserWithRoles = await _userService.GetUserWithRolesByIdAsync(otherUser.Id);
+
+            if (currentUserWithRoles == null || otherUserWithRoles == null)
+            {
+                return BadRequest("Could not determine user roles.");
+            }
+
+            bool IsSlb(ApplicationUser user) =>
+                user.ApplicationUserRoles?.Any(r => r.Role == Role.SLB) == true;
+
+            Guid slbId, studentId;
+            if (IsSlb(currentUserWithRoles) && !IsSlb(otherUserWithRoles))
+            {
+                slbId = currentUser.Id;
+                studentId = otherUser.Id;
+            }
+            else if (!IsSlb(currentUserWithRoles) && IsSlb(otherUserWithRoles))
+            {
+                slbId = otherUser.Id;
+                studentId = currentUser.Id;
+            }
+            else
+            {
+                slbId = currentUser.Id;
+                studentId = otherUser.Id;
+            }
+
+           
+            var existingChat = await _chatRepository.Query()
+                .FirstOrDefaultAsync(c =>
+                    (c.SlbApplicationUserId == currentUser.Id && c.StudentApplicationUserId == otherUser.Id) ||
+                    (c.SlbApplicationUserId == otherUser.Id && c.StudentApplicationUserId == currentUser.Id));
+
+            if (existingChat != null)
+            {
+                return Ok(existingChat);
+            }
+
+
+            var chat = new Chat
+            {
+                SlbApplicationUserId = slbId,
+                StudentApplicationUserId = studentId
+            };
+
+            await _chatRepository.AddAsync(chat);
+
+            return CreatedAtAction(nameof(Read), new { id = chat.Id }, chat);
+        }
+
+
 
     }
 }
