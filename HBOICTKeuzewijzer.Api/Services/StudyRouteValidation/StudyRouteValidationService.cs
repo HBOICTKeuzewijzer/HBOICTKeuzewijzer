@@ -1,27 +1,37 @@
 ﻿using HBOICTKeuzewijzer.Api.Models;
-using HBOICTKeuzewijzer.Api.Models.OerRequirements;
+using HBOICTKeuzewijzer.Api.Repositories;
+using HBOICTKeuzewijzer.Api.Services.StudyRouteValidation.Validators;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using System.Drawing;
 
 namespace HBOICTKeuzewijzer.Api.Services.StudyRouteValidation;
 
 public class StudyRouteValidationService : IStudyRouteValidationService
 {
     private readonly List<IStudyRouteValidationRule> _rules;
+    private readonly IRepository<Module> _moduleRepository;
 
-    public StudyRouteValidationService()
+    public StudyRouteValidationService(IRepository<Module> moduleRepository)
     {
+        _moduleRepository = moduleRepository;
+
         _rules = new List<IStudyRouteValidationRule>
         {
             new PropaedeuticRule(),
-            new PropaedeuticRule()
+            new SemesterConstraintRule(),
+            new EcRequirementRule(),
+            new ModuleRequirementRule(ModuleResolver),
+            new ModuleLevelRequirementRule()
         };
     }
 
     public StudyRouteValidationService(List<IStudyRouteValidationRule> rules)
     {
         _rules = rules;
+    }
+
+    private Task<Module?> ModuleResolver(Guid moduleId)
+    {
+        return _moduleRepository.GetByIdAsync(moduleId);
     }
 
     /// <summary>
@@ -35,11 +45,11 @@ public class StudyRouteValidationService : IStudyRouteValidationService
     /// This method iterates over all semesters in the provided route, extracting each module's prerequisites.
     /// If any rules (such as EC thresholds, required module completions, level requirements, or semester constraints)
     /// are violated, they are collected and returned as structured validation errors.
-    /// 
+    ///
     /// This method is intended to be used as part of backend API validation logic, providing standardized feedback
     /// in line with RFC 7807 Problem Details for HTTP APIs.
     /// </remarks>
-    public ValidationProblemDetails? ValidateRoute(StudyRoute routeToValidate)
+    public async Task<ValidationProblemDetails?> ValidateRoute(StudyRoute routeToValidate)
     {
         ArgumentNullException.ThrowIfNull(routeToValidate);
 
@@ -60,7 +70,7 @@ public class StudyRouteValidationService : IStudyRouteValidationService
         {
             foreach (var rule in _rules)
             {
-                rule.Validate(semester, previousSemesters, errors);
+                await rule.Validate(semester, previousSemesters, errors);
             }
 
             previousSemesters.Add(semester);
