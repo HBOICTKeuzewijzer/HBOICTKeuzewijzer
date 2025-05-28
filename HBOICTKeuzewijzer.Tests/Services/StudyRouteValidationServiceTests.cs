@@ -7,6 +7,7 @@ using System.Collections;
 using HBOICTKeuzewijzer.Api.Services.StudyRouteValidation;
 using System.Text;
 using HBOICTKeuzewijzer.Api.Services.StudyRouteValidation.Validators;
+using static HBOICTKeuzewijzer.Api.Services.StudyRouteValidation.StudyRouteValidationService;
 
 namespace HBOICTKeuzewijzer.Tests.Services
 {
@@ -80,7 +81,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
             var sut = new StudyRouteValidationService(GetValidators());
 
             var result = await sut.ValidateRoute(route);
-            
+
             result.Should().BeNull();
         }
 
@@ -727,10 +728,44 @@ namespace HBOICTKeuzewijzer.Tests.Services
             sb.AppendLine("- Niveau 2 niet gevonden.");
             sb.AppendLine("- Niveau 2 niet gevonden.");
             sb.AppendLine("- Niveau 1 gevonden.");
-            
+
             errors[0].Should()
                 .Be(sb.ToString());
         }
+
+        [Fact]
+        public Task ValidateYearconstraint_ReturnValidationError_Whenyearnotmeettherequirements()
+        {
+            var semester = TestHelpers.CreateSemester(0, new Module
+            {
+                Name = "Test module met year constraint",
+                PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
+                {
+                    YearConstraints = new List<int> { 2 },
+                    AvailableFromYear = 2
+                })
+            });
+
+            var route = new StudyRoute
+            {
+                Semesters = new List<Semester> { semester }
+            };
+
+            var sut = new StudyRouteValidationService(new List<IStudyRouteValidationRule>
+            {
+                new YearRequirement()
+            });
+
+            var result = sut.ValidateRoute(route).GetAwaiter().GetResult();
+
+            result.Should().NotBeNull();
+            result.Errors.Should().ContainKey(semester.Id.ToString());
+            result.Errors[semester.Id.ToString()].Should().Contain(m => m.Contains("mag alleen gevolgd worden in jaar"));
+            result.Errors[semester.Id.ToString()].Should().Contain(m => m.Contains("beschikbaar vanaf jaar"));
+
+            return Task.CompletedTask; 
+        }
+
 
         /// <summary>
         /// Sanity check if valid routes are still being accepted with all rules implemented.
@@ -906,7 +941,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
             errorsSemesterTwo[0].Should().Be($"Module: {faultySemesterTwo.Module!.Name} verwacht een voltooide propedeuse, minimaal 60 ec's behaald in de P fase, huidige ec's 30.");
             errorsSemesterTwo[1].Should().Be($"Module: {faultySemesterTwo.Module!.Name} kan alleen plaatsvinden in semester 1.");
             errorsSemesterTwo[2].Should().Be($"Module: {faultySemesterTwo.Module!.Name} verwacht dat uit propedeuse minimaal 60 ec zijn behaald, huidige behaalde ec's is 30.");
-            
+
             var sbSemesterTwo = new StringBuilder();
             sbSemesterTwo.AppendLine($"Module: {faultySemesterTwo.Module!.Name} verwacht dat de volgende groep modules aanwezig is in de voorgaande semesters:");
             sbSemesterTwo.AppendLine();
@@ -1181,7 +1216,7 @@ public class TestModules
             {
                 AvailableFromYear = 2,
                 SemesterConstraint = SemesterConstraint.Second,
-                EcRequirements = 
+                EcRequirements =
                 [
                     new EcRequirement
                     {
