@@ -733,7 +733,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
         }
 
         [Fact]
-        public Task ValidateYearconstraint_ReturnValidationError_Whenyearnotmeettherequirements()
+        public async Task ValidateYearconstraint_ReturnValidationError_Whenyearnotmeettherequirements()
         {
             var semester = TestHelpers.CreateSemester(0, new Module
             {
@@ -755,14 +755,12 @@ namespace HBOICTKeuzewijzer.Tests.Services
                 new YearRequirementRule()
             });
 
-            var result = sut.ValidateRoute(route).GetAwaiter().GetResult();
+            var result = await sut.ValidateRoute(route);
 
             result.Should().NotBeNull();
             result.Errors.Should().ContainKey(semester.Id.ToString());
             result.Errors[semester.Id.ToString()].Should().Contain(m => m.Contains("mag alleen gevolgd worden in jaar"));
             result.Errors[semester.Id.ToString()].Should().Contain(m => m.Contains("beschikbaar vanaf jaar"));
-
-            return Task.CompletedTask; 
         }
 
 
