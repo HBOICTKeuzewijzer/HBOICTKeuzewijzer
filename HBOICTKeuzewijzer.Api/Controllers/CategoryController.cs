@@ -3,7 +3,6 @@ using HBOICTKeuzewijzer.Api.Models;
 using HBOICTKeuzewijzer.Api.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
-
 namespace HBOICTKeuzewijzer.Api.Controllers
 {
     [Route("[controller]")]
@@ -52,6 +51,8 @@ namespace HBOICTKeuzewijzer.Api.Controllers
                 return BadRequest();
             }
 
+            category.Modules = null; // met dit
+
             await _categoryRepo.UpdateAsync(category);
             return NoContent();
         }
@@ -64,6 +65,14 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             await _categoryRepo.AddAsync(category);
 
             return CreatedAtAction("GetCategory", new { id = category.Id }, category);
+        }
+        
+        [HttpGet("paginated")]
+        [EnumAuthorize(Role.SystemAdmin, Role.ModuleAdmin)]
+        public async Task<ActionResult<PaginatedResult<Category>>> GetPaginatedCategories([FromQuery] GetAllRequestQuery request)
+        {
+            var result = await _categoryRepo.GetPaginatedAsync(request);
+            return Ok(result);
         }
 
         // DELETE: api/Category/5

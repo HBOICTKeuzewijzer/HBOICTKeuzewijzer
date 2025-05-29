@@ -1,6 +1,8 @@
 ﻿using HBOICTKeuzewijzer.Api.Attributes;
 using HBOICTKeuzewijzer.Api.Models;
 using HBOICTKeuzewijzer.Api.Repositories;
+using HBOICTKeuzewijzer.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 

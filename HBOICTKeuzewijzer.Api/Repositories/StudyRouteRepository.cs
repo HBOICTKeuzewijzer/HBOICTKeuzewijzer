@@ -1,6 +1,5 @@
 ﻿using HBOICTKeuzewijzer.Api.DAL;
 using HBOICTKeuzewijzer.Api.Models;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
 namespace HBOICTKeuzewijzer.Api.Repositories;
