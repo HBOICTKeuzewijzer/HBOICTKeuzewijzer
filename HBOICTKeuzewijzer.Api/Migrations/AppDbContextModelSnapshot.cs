@@ -211,6 +211,9 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                     b.Property<int>("ECs")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsPropaedeutic")
+                        .HasColumnType("bit");
+
                     b.Property<int>("Level")
                         .HasColumnType("int");
 

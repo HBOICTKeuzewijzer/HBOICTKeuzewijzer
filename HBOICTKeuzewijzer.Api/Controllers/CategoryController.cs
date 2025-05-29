@@ -3,7 +3,6 @@ using HBOICTKeuzewijzer.Api.Models;
 using HBOICTKeuzewijzer.Api.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
-
 namespace HBOICTKeuzewijzer.Api.Controllers
 {
     [Route("[controller]")]

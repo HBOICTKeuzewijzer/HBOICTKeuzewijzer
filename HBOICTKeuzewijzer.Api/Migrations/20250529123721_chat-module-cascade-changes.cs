@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace HBOICTKeuzewijzer.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class cascadesseveralentities : Migration
+    public partial class chatmodulecascadechanges : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -25,6 +25,27 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                 type: "uniqueidentifier",
                 nullable: true);
 
+            migrationBuilder.AddColumn<bool>(
+                name: "IsPropaedeutic",
+                table: "Modules",
+                type: "bit",
+                nullable: false,
+                defaultValue: false);
+
+            migrationBuilder.AddColumn<bool>(
+                name: "SlbRead",
+                table: "Messages",
+                type: "bit",
+                nullable: false,
+                defaultValue: false);
+
+            migrationBuilder.AddColumn<bool>(
+                name: "StudentRead",
+                table: "Messages",
+                type: "bit",
+                nullable: false,
+                defaultValue: false);
+
             migrationBuilder.CreateTable(
                 name: "CustomModules",
                 columns: table => new
@@ -39,12 +60,47 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                     table.PrimaryKey("PK_CustomModules", x => x.Id);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Slb",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    SlbApplicationUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    StudentApplicationUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Slb", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Slb_ApplicationUsers_SlbApplicationUserId",
+                        column: x => x.SlbApplicationUserId,
+                        principalTable: "ApplicationUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Slb_ApplicationUsers_StudentApplicationUserId",
+                        column: x => x.StudentApplicationUserId,
+                        principalTable: "ApplicationUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Semesters_CustomModuleId",
                 table: "Semesters",
                 column: "CustomModuleId",
                 unique: true,
                 filter: "[CustomModuleId] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Slb_SlbApplicationUserId",
+                table: "Slb",
+                column: "SlbApplicationUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Slb_StudentApplicationUserId",
+                table: "Slb",
+                column: "StudentApplicationUserId");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Chats_ApplicationUsers_SlbApplicationUserId",
@@ -89,6 +145,9 @@ namespace HBOICTKeuzewijzer.Api.Migrations
             migrationBuilder.DropTable(
                 name: "CustomModules");
 
+            migrationBuilder.DropTable(
+                name: "Slb");
+
             migrationBuilder.DropIndex(
                 name: "IX_Semesters_CustomModuleId",
                 table: "Semesters");
@@ -96,6 +155,18 @@ namespace HBOICTKeuzewijzer.Api.Migrations
             migrationBuilder.DropColumn(
                 name: "CustomModuleId",
                 table: "Semesters");
+
+            migrationBuilder.DropColumn(
+                name: "IsPropaedeutic",
+                table: "Modules");
+
+            migrationBuilder.DropColumn(
+                name: "SlbRead",
+                table: "Messages");
+
+            migrationBuilder.DropColumn(
+                name: "StudentRead",
+                table: "Messages");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Chats_ApplicationUsers_SlbApplicationUserId",

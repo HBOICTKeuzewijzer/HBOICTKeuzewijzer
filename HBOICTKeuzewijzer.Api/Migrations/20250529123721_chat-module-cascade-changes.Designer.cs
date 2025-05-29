@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HBOICTKeuzewijzer.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250527191416_cascades-several-entities")]
-    partial class cascadesseveralentities
+    [Migration("20250529123721_chat-module-cascade-changes")]
+    partial class chatmodulecascadechanges
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -213,6 +213,9 @@ namespace HBOICTKeuzewijzer.Api.Migrations
 
                     b.Property<int>("ECs")
                         .HasColumnType("int");
+
+                    b.Property<bool>("IsPropaedeutic")
+                        .HasColumnType("bit");
 
                     b.Property<int>("Level")
                         .HasColumnType("int");
