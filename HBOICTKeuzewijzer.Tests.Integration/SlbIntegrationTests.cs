@@ -146,7 +146,7 @@ public class SlbIntegrationTests
             await SeedHelper.SeedAsync(factory.Services, slbRelation1);
             await SeedHelper.SeedAsync(factory.Services, slbRelation2);
 
-            var request = new HttpRequestMessage(HttpMethod.Get, $"/{slbId}/students?pageNumber=1&pageSize=10");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"/Slb/{slbUser.Id}/students?pageNumber=1&pageSize=10");
             request.Headers.Add("X-Test-Auth", "true");
             request.Headers.Add("X-Test-Role", role);
 
@@ -163,5 +163,13 @@ public class SlbIntegrationTests
             pagedResult.Page.Should().Be(1);
             pagedResult.PageSize.Should().Be(10);
         }
+
+        [Theory]
+        [InlineData("SLB")]
+        public async Task GetStudentsForUser_ReturnsStudentsForGivenSlb(string role)
+        {
+
+        }
     }
+
 }
