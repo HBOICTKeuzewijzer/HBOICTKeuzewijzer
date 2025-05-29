@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HBOICTKeuzewijzer.Api.Models
 {
-    public class Module
+    public class Module : IEntity
     {
         [Key]
         public Guid Id { get; set; }

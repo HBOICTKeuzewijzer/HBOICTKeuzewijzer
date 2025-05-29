@@ -1,6 +1,5 @@
 ﻿using HBOICTKeuzewijzer.Api.DAL;
 using HBOICTKeuzewijzer.Api.Models;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
 namespace HBOICTKeuzewijzer.Api.Repositories;
@@ -15,14 +14,14 @@ public class StudyRouteRepository : Repository<StudyRoute>, IStudyRouteRepositor
 
     public async Task<List<StudyRoute>> GetForUser(ApplicationUser user)
     {
-        return await Queryable()
+        return await Query()
             .Where(s => s.ApplicationUserId == user.Id)
             .ToListAsync();
     }
 
     public async Task<StudyRoute> GetByIdWithSemesters(Guid id)
     {
-        return await Queryable()
+        return await Query()
             .Include(s => s.Semesters!)
             .ThenInclude(s => s.Module)
             .ThenInclude(m => m.Category)
@@ -31,7 +30,7 @@ public class StudyRouteRepository : Repository<StudyRoute>, IStudyRouteRepositor
 
     public async Task<bool> DeleteForUser(Guid id, ApplicationUser user)
     {
-        var studyRoute = await Queryable()
+        var studyRoute = await Query()
             .FirstOrDefaultAsync(s => s.Id == id && s.ApplicationUserId == user.Id);
 
         if (studyRoute is null)
@@ -46,7 +45,7 @@ public class StudyRouteRepository : Repository<StudyRoute>, IStudyRouteRepositor
 
     public async Task<StudyRoute> AddWithUniqueDisplayName(ApplicationUser user, string baseDisplayName)
     {
-        var existingNames = await Queryable()
+        var existingNames = await Query()
             .Where(r => r.ApplicationUserId == user.Id)
             .Select(r => r.DisplayName)
             .ToListAsync();
@@ -83,7 +82,7 @@ public class StudyRouteRepository : Repository<StudyRoute>, IStudyRouteRepositor
 
     public async Task<StudyRoute?> GetForUserById(ApplicationUser user, Guid id)
     {
-        return await Queryable()
+        return await Query()
             .Include(s => s.Semesters!)
             .ThenInclude(s => s.Module)
             .ThenInclude(m => m.Category)
