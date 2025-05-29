@@ -29,9 +29,9 @@ namespace HBOICTKeuzewijzer.Api.Models
         public int Level { get; set; }
 
         [Required]
-        public bool Locked { get; set; } = false;
+        public bool Required { get; set; } = false;
 
-        public int? LockedSemester { get; set; }
+        public int? RequiredSemester { get; set; }
 
         [Required]
         public bool IsPropaedeutic { get; set; }

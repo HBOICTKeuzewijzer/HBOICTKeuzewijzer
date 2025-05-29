@@ -19,6 +19,7 @@ public class StudyRouteValidationService : IStudyRouteValidationService
             new PropaedeuticRule(),
             new SemesterConstraintRule(),
             new EcRequirementRule(),
+            new YearRequirementRule(),
             new ModuleRequirementRule(ModuleResolver),
             new ModuleLevelRequirementRule()
         };
@@ -87,119 +88,5 @@ public class StudyRouteValidationService : IStudyRouteValidationService
         }
 
         return null;
-    }
-}
-
-public interface IStudyRouteValidationRule
-{
-    void Validate(Semester currentSemester, List<Semester> previousSemesters, Dictionary<string, List<string>> errors);
-}
-
-public abstract class StudyRouteValidationRuleBase : IStudyRouteValidationRule
-{
-    public abstract void Validate(Semester currentSemester, List<Semester> previousSemesters, Dictionary<string, List<string>> errors);
-
-    protected bool GetParsedPrerequisite(Semester semester, out ModulePrerequisite? modulePrerequisite)
-    {
-        if (semester.Module is null || string.IsNullOrEmpty(semester.Module.PrerequisiteJson))
-        {
-            modulePrerequisite = null;
-            return false;
-        }
-
-        modulePrerequisite = JsonConvert.DeserializeObject<ModulePrerequisite>(semester.Module.PrerequisiteJson);
-        return true;
-    }
-
-    protected void AddError(string errorText, string key, Dictionary<string, List<string>> errors)
-    {
-        if (!errors.ContainsKey(key))
-        {
-            errors[key] = new List<string>();
-        }
-
-        errors[key].Add(errorText);
-    }
-}
-
-public class PropaedeuticRule : StudyRouteValidationRuleBase
-{
-    public override void Validate(Semester currentSemester, List<Semester> previousSemesters, Dictionary<string, List<string>> errors)
-    {
-        if (!GetParsedPrerequisite(currentSemester, out var modulePrerequisite)) return;
-
-        if (modulePrerequisite is null) return;
-
-        if (!modulePrerequisite.Propaedeutic) return;
-
-        var pSemesters = previousSemesters
-            .Where(s => s.Module is not null)
-            .Where(s => s.Module!.IsPropaedeutic)
-            .ToList();
-
-        if (pSemesters.Count() < 2)
-        {
-            AddError($"Module: {currentSemester.Module!.Name} verwacht een voltooide propedeuse, minimaal 2 modules uit de P fase, {pSemesters.Count()} gevonden.", currentSemester.Id.ToString(), errors);
-        }
-
-        var ecSum = pSemesters.Sum(s => s.AcquiredECs);
-        if (ecSum < 60)
-        {
-            AddError($"Module: {currentSemester.Module!.Name} verwacht een voltooide propedeuse, minimaal 60 ec's behaald in de P fase, huidige ec's {ecSum}", currentSemester.Id.ToString(), errors);
-        }
-    }
-}
-
-public class SemesterConstraintRule : StudyRouteValidationRuleBase
-{
-    public override void Validate(Semester currentSemester, List<Semester> previousSemesters, Dictionary<string, List<string>> errors)
-    {
-        if (!GetParsedPrerequisite(currentSemester, out var modulePrerequisite)) return;
-
-        if (modulePrerequisite is null) return;
-
-        var currentSemesterConstraint = currentSemester.Index % 2 == 0 ? SemesterConstraint.First : SemesterConstraint.Second;
-
-        if (modulePrerequisite.SemesterConstraint is not null &&
-            modulePrerequisite.SemesterConstraint != currentSemesterConstraint)
-        {
-            AddError($"Module: {currentSemester.Module!.Name} kan alleen plaatsvinden in semester {currentSemesterConstraint + 1}.", currentSemester.Id.ToString(), errors);
-        }
-    }
-}
-
-public class EcRequirementRule : StudyRouteValidationRuleBase
-{
-    public override void Validate(Semester currentSemester, List<Semester> previousSemesters, Dictionary<string, List<string>> errors)
-    {
-        throw new NotImplementedException();
-    }
-}
-
-
-public class YearConstraintRule : StudyRouteValidationRuleBase
-{
-    public override void Validate(Semester currentSemester, List<Semester> previousSemesters,
-        Dictionary<string, List<string>> errors)
-    {
-        if (!GetParsedPrerequisite(currentSemester, out var prerequisite)) return;
-
-        int year = (currentSemester.Index / 2) + 1;
-
-        // check for the YearConstraints
-        if (prerequisite.YearConstraints != null && prerequisite.YearConstraints.Any())
-        {
-            if (!prerequisite.YearConstraints.Contains(year))
-            {
-                AddError($"Module: {currentSemester.Module!.Name} mag alleen gevolgd worden in jaar {string.Join(", ", prerequisite.YearConstraints)}, maar is geplaatst in jaar {year}.", currentSemester.Id.ToString(), errors);
-
-            }
-        }
-
-        // check for the availablefromyear
-        if (prerequisite.AvailableFromYear > 0 && year < prerequisite.AvailableFromYear)
-        {
-            AddError($"Module: {currentSemester.Module!.Name} is pas beschikbaar vanaf jaar {prerequisite.AvailableFromYear}, maar is nu gepland in jaar {year}.", currentSemester.Id.ToString(), errors);
-        }
     }
 }

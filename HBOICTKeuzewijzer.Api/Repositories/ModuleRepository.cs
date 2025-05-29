@@ -23,7 +23,7 @@ namespace HBOICTKeuzewijzer.Api.Repositories
 
             foreach (var module in requiredModules)
             {
-                var requiredSemester = module.LockedSemester ?? 0;
+                var requiredSemester = module.RequiredSemester ?? 0;
 
                 semesters[requiredSemester].Module = module;
             }

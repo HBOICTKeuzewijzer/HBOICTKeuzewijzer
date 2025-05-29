@@ -1161,8 +1161,8 @@ public class TestModules
             IsPropaedeutic = true,
             ECs = 30,
             Level = 1,
-            Locked = true,
-            LockedSemester = 1
+            Required = true,
+            RequiredSemester = 1
         });
 
         Modules.Add(beherenVanEenVerandertraject, new Module

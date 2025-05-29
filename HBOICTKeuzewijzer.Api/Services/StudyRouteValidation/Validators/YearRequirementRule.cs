@@ -2,7 +2,7 @@
 
 namespace HBOICTKeuzewijzer.Api.Services.StudyRouteValidation.Validators
 {
-    public class YearRequirement : StudyRouteValidationRuleBase
+    public class YearRequirementRule : StudyRouteValidationRuleBase
     {
         public override Task Validate(Semester currentSemester, List<Semester> previousSemesters,
             Dictionary<string, List<string>> errors)
