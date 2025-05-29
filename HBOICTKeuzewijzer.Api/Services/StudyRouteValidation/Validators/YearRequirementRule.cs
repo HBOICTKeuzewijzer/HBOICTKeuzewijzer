@@ -17,7 +17,6 @@ namespace HBOICTKeuzewijzer.Api.Services.StudyRouteValidation.Validators
                 if (!prerequisite.YearConstraints.Contains(year))
                 {
                     AddError($"Module: {currentSemester.Module!.Name} mag alleen gevolgd worden in jaar {string.Join(", ", prerequisite.YearConstraints)}, maar is geplaatst in jaar {year}.", currentSemester.Id.ToString(), errors);
-
                 }
             }
             // check for the availablefromyear
