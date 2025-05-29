@@ -15,11 +15,22 @@ namespace HBOICTKeuzewijzer.Api.DAL
         public DbSet<Semester> Semesters { get; set; } = null!;
         public DbSet<StudyRoute> StudyRoutes { get; set; } = null!;
         public DbSet<Slb> Slb { get; set; } = null!;
+        public DbSet<ModuleReview> ModuleReviews { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            
+            modelBuilder.Entity<ModuleReview>()
+                .HasOne(r => r.Module)
+                .WithMany(m => m.Reviews)
+                .HasForeignKey(r => r.ModuleId);
+
+            modelBuilder.Entity<ModuleReview>()
+                .HasOne(r => r.Student)
+                .WithMany()
+                .HasForeignKey(r => r.StudentId);
 
             modelBuilder.Entity<ApplicationUser>()
                 .HasIndex(e => e.Email)
