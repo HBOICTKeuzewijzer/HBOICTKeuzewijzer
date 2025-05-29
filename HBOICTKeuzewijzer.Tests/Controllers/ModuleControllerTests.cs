@@ -87,5 +87,15 @@ namespace HBOICTKeuzewijzer.tests.Controllers
             Assert.IsType<SerializableError>(badRequestResult.Value);
         }
 
+        [Fact]
+        public async Task UpdateModule_ReturnsSucces_WhenModelStateIsValid()
+        {
+            //Arrange
+
+            //Act
+
+            //Assert
+        }
+
     }
 }
