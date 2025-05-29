@@ -33,7 +33,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         public async Task<ActionResult<PaginatedResult<Slb>>> GetPagedSlb(
             [FromQuery] GetAllRequestQuery request)
         {
-            var result = await _slbRepo.GetPaginatedAsync(request, s => s.Id);
+            var result = await _slbRepo.GetPaginatedAsync(request, s => s.Id, s => s.SlbApplicationUser, s => s.StudentApplicationUser); 
             return Ok(result);
         }
 
