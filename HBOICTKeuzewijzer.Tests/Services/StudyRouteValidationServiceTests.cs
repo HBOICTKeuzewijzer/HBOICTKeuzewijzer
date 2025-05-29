@@ -40,7 +40,9 @@ namespace HBOICTKeuzewijzer.Tests.Services
                 {
                     var module = _testModules.GetById(id);
                     return Task.FromResult<Module?>(module);
-                })
+                }),
+                new ModuleLevelRequirementRule(),
+                new YearRequirementRule()
             ];
         }
 
@@ -1381,7 +1383,7 @@ public class TestModules
                                 Level = 2,
                                 EcRequirement = new EcRequirement
                                 {
-                                    RequiredAmount = 60
+                                    RequiredAmount = 30
                                 }
                             },
                             new ModuleLevelRequirement
@@ -1389,7 +1391,7 @@ public class TestModules
                                 Level = 2,
                                 EcRequirement = new EcRequirement
                                 {
-                                    RequiredAmount = 60
+                                    RequiredAmount = 30
                                 }
                             }
                         ]
@@ -1429,7 +1431,7 @@ public class TestModules
                                 Level = 2,
                                 EcRequirement = new EcRequirement
                                 {
-                                    RequiredAmount = 60
+                                    RequiredAmount = 30
                                 }
                             },
                             new ModuleLevelRequirement
@@ -1437,7 +1439,7 @@ public class TestModules
                                 Level = 2,
                                 EcRequirement = new EcRequirement
                                 {
-                                    RequiredAmount = 60
+                                    RequiredAmount = 30
                                 }
                             }
                         ]
@@ -1525,7 +1527,7 @@ public class TestModules
                                 Level = 2,
                                 EcRequirement = new EcRequirement
                                 {
-                                    RequiredAmount = 60
+                                    RequiredAmount = 30
                                 }
                             },
                             new ModuleLevelRequirement
@@ -1533,7 +1535,7 @@ public class TestModules
                                 Level = 2,
                                 EcRequirement = new EcRequirement
                                 {
-                                    RequiredAmount = 60
+                                    RequiredAmount = 30
                                 }
                             }
                         ]
@@ -1621,7 +1623,7 @@ public class TestModules
                                 Level = 2,
                                 EcRequirement = new EcRequirement
                                 {
-                                    RequiredAmount = 60
+                                    RequiredAmount = 30
                                 }
                             },
                             new ModuleLevelRequirement
@@ -1629,7 +1631,7 @@ public class TestModules
                                 Level = 2,
                                 EcRequirement = new EcRequirement
                                 {
-                                    RequiredAmount = 60
+                                    RequiredAmount = 30
                                 }
                             }
                         ]
