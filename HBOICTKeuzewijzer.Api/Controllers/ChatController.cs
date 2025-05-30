@@ -13,9 +13,9 @@ namespace HBOICTKeuzewijzer.Api.Controllers
     public class ChatController : ControllerBase
     {
         private readonly IRepository<Chat> _chatRepository;
-        private readonly ApplicationUserService _userService;
+        private readonly IApplicationUserService _userService;
 
-        public ChatController(IRepository<Chat> chatRepository, ApplicationUserService userService)
+        public ChatController(IRepository<Chat> chatRepository, IApplicationUserService userService)
         {
             _chatRepository = chatRepository;
             _userService = userService;

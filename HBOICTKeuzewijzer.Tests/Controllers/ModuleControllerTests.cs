@@ -11,13 +11,13 @@ namespace HBOICTKeuzewijzer.tests.Controllers
     public class ModuleControllerTests
     {
         private readonly Mock<IRepository<Module>> _mockRepo;
-        private readonly Mock<ApplicationUserService> _mockUserService;
+        private readonly Mock<IApplicationUserService> _mockUserService;
         private readonly ModuleController _controller;
 
         public ModuleControllerTests()
         {
             _mockRepo = new Mock<IRepository<Module>>();
-            _mockUserService = new Mock<ApplicationUserService>(null!);
+            _mockUserService = new Mock<IApplicationUserService>();
             _controller = new ModuleController(_mockRepo.Object, _mockUserService.Object);
         }
 

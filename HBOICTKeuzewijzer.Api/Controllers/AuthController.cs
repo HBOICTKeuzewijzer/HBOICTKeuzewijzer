@@ -10,9 +10,9 @@ namespace HBOICTKeuzewijzer.Api.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly ApplicationUserService _applicationUserService;
+        private readonly IApplicationUserService _applicationUserService;
 
-        public AuthController(ApplicationUserService applicationUserService)
+        public AuthController(IApplicationUserService applicationUserService)
         {
             _applicationUserService = applicationUserService;
 
@@ -89,7 +89,5 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 
             return Ok(new { Id = id, Roles = roles.Select(r => r.ToString()).ToList() });
         }
-
-
     }
 }

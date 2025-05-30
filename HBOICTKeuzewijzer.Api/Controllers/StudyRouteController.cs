@@ -12,10 +12,10 @@ namespace HBOICTKeuzewijzer.Api.Controllers
     public class StudyRouteController : ControllerBase
     {
         private readonly IStudyRouteRepository _studyRouteRepository;
-        private readonly ApplicationUserService _applicationUserService;
+        private readonly IApplicationUserService _applicationUserService;
         private readonly IModuleRepository _moduleRepository;
 
-        public StudyRouteController(IStudyRouteRepository studyRouteRepository, IModuleRepository moduleRepository, ApplicationUserService applicationUserService)
+        public StudyRouteController(IStudyRouteRepository studyRouteRepository, IModuleRepository moduleRepository, IApplicationUserService applicationUserService)
         {
             _studyRouteRepository = studyRouteRepository;
             _applicationUserService = applicationUserService;
