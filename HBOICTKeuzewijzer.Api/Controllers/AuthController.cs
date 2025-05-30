@@ -15,7 +15,6 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         public AuthController(ApplicationUserService applicationUserService)
         {
             _applicationUserService = applicationUserService;
-
         }
 
         [HttpGet("login")]
@@ -23,16 +22,31 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         {
             return Challenge(new AuthenticationProperties
             {
-                RedirectUri = $"/auth/success?returnUrl={Uri.EscapeDataString(returnUrl)}"
+                RedirectUri = $"/auth/succes?returnUrl={Uri.EscapeDataString(returnUrl)}"
             }, "Saml2");
         }
 
-        [HttpGet("success")]
+        [HttpGet("succes")]
         [Authorize]
-        public async Task<IActionResult> Success([FromQuery] string returnUrl = "/")
+        public async Task<IActionResult> Succes([FromQuery] string returnUrl = "/")
         {
             var user = await _applicationUserService.GetOrCreateUserAsync(User);
 
+            return Redirect(returnUrl);
+        }
+
+        [HttpGet("logout")]
+        public IActionResult Logout([FromQuery] string returnUrl = "/")
+        {
+            return SignOut(new AuthenticationProperties
+            {
+                RedirectUri = $"/auth/logout-succes?returnUrl={Uri.EscapeDataString(returnUrl)}"
+            });
+        }
+
+        [HttpGet("logout-succes")]
+        public IActionResult LogoutSucces([FromQuery] string returnUrl = "/")
+        {
             return Redirect(returnUrl);
         }
 

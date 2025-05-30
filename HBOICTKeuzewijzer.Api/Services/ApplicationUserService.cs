@@ -89,7 +89,7 @@ namespace HBOICTKeuzewijzer.Api.Services
                 appDbContext.ApplicationUserRoles.Add(new ApplicationUserRole
                 {
                     Role = role,
-                    ApplicationUsers = user
+                    ApplicationUser = user
                 });
             }
 

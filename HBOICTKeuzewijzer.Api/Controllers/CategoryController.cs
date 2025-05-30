@@ -3,7 +3,6 @@ using HBOICTKeuzewijzer.Api.Models;
 using HBOICTKeuzewijzer.Api.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
-
 namespace HBOICTKeuzewijzer.Api.Controllers
 {
     [Route("[controller]")]
@@ -51,6 +50,8 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             {
                 return BadRequest();
             }
+
+            category.Modules = null; // met dit
 
             await _categoryRepo.UpdateAsync(category);
             return NoContent();

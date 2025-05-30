@@ -3,7 +3,7 @@ using System.Linq.Expressions;
 
 namespace HBOICTKeuzewijzer.Api.Repositories
 {
-    public interface IRepository<T> where T : class
+    public interface IRepository<T> where T : class, IEntity
     {
         Task<T?> GetByIdAsync(Guid id);
         Task<IEnumerable<T>> GetAllAsync();
