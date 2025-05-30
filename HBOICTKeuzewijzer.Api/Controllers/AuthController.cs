@@ -15,7 +15,6 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         public AuthController(ApplicationUserService applicationUserService)
         {
             _applicationUserService = applicationUserService;
-
         }
 
         [HttpGet("login")]
@@ -29,7 +28,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 
         [HttpGet("succes")]
         [Authorize]
-        public async Task<IActionResult> Success([FromQuery] string returnUrl = "/")
+        public async Task<IActionResult> Succes([FromQuery] string returnUrl = "/")
         {
             var user = await _applicationUserService.GetOrCreateUserAsync(User);
 
