@@ -138,9 +138,18 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 
             foreach (var semester in existingRoute.Semesters!)
             {
-                var relevantSemester = updatedRoute.Semesters.FirstOrDefault(s => s.Id == semester.Id);
 
-                semester.ModuleId = relevantSemester?.ModuleId ?? null;
+                var relevantSemester = updatedRoute.Semesters.FirstOrDefault(s => s.Id == semester.Id);
+                if (relevantSemester is null) continue;
+
+                if (relevantSemester.ModuleId is not null)
+                {
+                    semester.ModuleId = relevantSemester.ModuleId;
+                }
+                else if (relevantSemester.CustomModule is not null)
+                {
+                    semester.CustomModule = relevantSemester.CustomModule;
+                }
             }
 
             await _studyRouteRepository.UpdateAsync(existingRoute);

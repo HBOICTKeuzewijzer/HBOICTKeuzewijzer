@@ -25,6 +25,8 @@ public class StudyRouteRepository : Repository<StudyRoute>, IStudyRouteRepositor
             .Include(s => s.Semesters!)
             .ThenInclude(s => s.Module)
             .ThenInclude(m => m.Category)
+            .Include(s => s.Semesters!)
+            .ThenInclude(s => s.CustomModule)
             .FirstOrDefaultAsync(m => m.Id == id);
     }
 
@@ -86,6 +88,8 @@ public class StudyRouteRepository : Repository<StudyRoute>, IStudyRouteRepositor
             .Include(s => s.Semesters!)
             .ThenInclude(s => s.Module)
             .ThenInclude(m => m.Category)
+            .Include(s => s.Semesters!)
+            .ThenInclude(s => s.CustomModule)
             .FirstOrDefaultAsync(r => r.Id == id && r.ApplicationUserId == user.Id);
     }
 }
