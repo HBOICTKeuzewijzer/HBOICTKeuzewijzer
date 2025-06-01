@@ -136,12 +136,12 @@ namespace HBOICTKeuzewijzer.Api
                     {
                         context.Response.StatusCode = 500;
                         context.Response.ContentType = "application/json";
-                        await context.Response.WriteAsync("{\\\"error\\\": \\\"An unexpected error occurred.\\\"}");
+                        await context.Response.WriteAsJsonAsync(new { error = "An unexpected error occurred." });
                     });
                 });
                 app.UseHsts();
             }
-
+            
             var forwardedHeadersOptions = new ForwardedHeadersOptions
             {
                 ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
