@@ -63,7 +63,7 @@ namespace HBOICTKeuzewijzer.Api
                     MetadataLocation = metadataPath
                 });
             });
-
+            
             services.AddCors(options =>
             {
                 options.AddDefaultPolicy(policy =>
@@ -109,6 +109,38 @@ namespace HBOICTKeuzewijzer.Api
             }
 
             app.UseCors();
+
+            app.Use(async (context, next) =>
+            {
+                // Prevents embedding your site in iframes (protects against clickjacking attacks)
+                context.Response.Headers.Append("X-Frame-Options", "DENY");
+
+                // Prevents browsers from MIME type sniffing (forces respect for Content-Type headers)
+                context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+
+                // Prevents referrer information from being sent to other sites (strong privacy setting)
+                context.Response.Headers.Append("Referrer-Policy", "no-referrer");
+
+                // Defines which sources are allowed to load content (scripts, styles, images, etc.)
+                // In this case, only allows same-origin resources (very restrictive, may break Swagger UI if used there)
+                context.Response.Headers.Append("Content-Security-Policy", "default-src 'self'");
+
+                await next();
+            });
+
+            if (!app.Environment.IsDevelopment())
+            {
+                app.UseExceptionHandler(error =>
+                {
+                    error.Run(async context =>
+                    {
+                        context.Response.StatusCode = 500;
+                        context.Response.ContentType = "application/json";
+                        await context.Response.WriteAsync("{\\\"error\\\": \\\"An unexpected error occurred.\\\"}");
+                    });
+                });
+                app.UseHsts();
+            }
 
             var forwardedHeadersOptions = new ForwardedHeadersOptions
             {
