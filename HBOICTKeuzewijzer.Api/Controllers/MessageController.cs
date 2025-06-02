@@ -20,12 +20,12 @@ namespace HBOICTKeuzewijzer.Api.Controllers
     {
         private readonly IRepository<Message> _messageRepository;
         private readonly IRepository<Chat> _chatRepository;
-        private readonly ApplicationUserService _userService;
+        private readonly IApplicationUserService _userService;
 
         public MessageController(
             IRepository<Message> messageRepository,
             IRepository<Chat> chatRepository,
-            ApplicationUserService userService)
+            IApplicationUserService userService)
         {
             _messageRepository = messageRepository;
             _chatRepository = chatRepository;
