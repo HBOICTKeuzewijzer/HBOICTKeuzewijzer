@@ -91,7 +91,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
                 throw;
             }
 
-            return CreatedAtAction(nameof(GetModule), new { id = module.Id }, module);
+            return NoContent();
         }
 
         // POST: api/Module
