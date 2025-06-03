@@ -5,6 +5,7 @@ using HBOICTKeuzewijzer.Api.Models;
 using HBOICTKeuzewijzer.Api.Repositories;
 using HBOICTKeuzewijzer.Api.Services;
 using System.Security.Claims;
+using HBOICTKeuzewijzer.Tests.Services;
 
 namespace HBOICTKeuzewijzer.tests.Controllers
 {
@@ -86,16 +87,5 @@ namespace HBOICTKeuzewijzer.tests.Controllers
             var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
             Assert.IsType<SerializableError>(badRequestResult.Value);
         }
-
-        [Fact]
-        public async Task UpdateModule_ReturnsSucces_WhenModelStateIsValid()
-        {
-            //Arrange
-
-            //Act
-
-            //Assert
-        }
-
     }
 }

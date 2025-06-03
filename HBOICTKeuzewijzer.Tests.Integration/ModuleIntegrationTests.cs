@@ -253,8 +253,6 @@ namespace HBOICTKeuzewijzer.Tests.Integration
                 response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
             }
 
-
-
             [Fact]
             public async Task PutCategory_RespondsWithUnauthorized_WhenNotAuthenticated()
             {
