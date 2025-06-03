@@ -48,5 +48,7 @@ namespace HBOICTKeuzewijzer.Api.Models
         public Guid OerId { get; set; }
 
         public ICollection<Semester>? Semesters { get; set; }
+        public List<ModuleReview>? Reviews { get; set; } = new();
+
     }
 }
