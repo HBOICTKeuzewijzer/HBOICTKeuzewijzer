@@ -13,7 +13,7 @@ namespace HBOICTKeuzewijzer.Api.Models
 
         [Required]
         public Guid ModuleId { get; set; }
-        public Module Module { get; set; }
+        public Module? Module { get; set; }
 
         [Required]
         [MaxLength(1000)]
