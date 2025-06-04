@@ -15,8 +15,7 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                 name: "ModuleReviews",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     StudentId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ModuleId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ReviewText = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),

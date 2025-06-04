@@ -1,11 +1,10 @@
-using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace HBOICTKeuzewijzer.Api.Models
 {
-    public class ModuleReview
+    public class ModuleReview : IEntity
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         [Required]
         public Guid StudentId { get; set; }
