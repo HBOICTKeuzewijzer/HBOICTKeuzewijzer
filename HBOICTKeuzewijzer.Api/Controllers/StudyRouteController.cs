@@ -150,6 +150,8 @@ namespace HBOICTKeuzewijzer.Api.Controllers
                 {
                     semester.CustomModule = relevantSemester.CustomModule;
                 }
+
+                semester.AcquiredECs = relevantSemester.AcquiredECs;
             }
 
             await _studyRouteRepository.UpdateAsync(existingRoute);
