@@ -14,9 +14,9 @@ namespace HBOICTKeuzewijzer.Api.Controllers
     public class SlbController : ControllerBase
     {
         private readonly ISlbRepository _slbRepo;
-        private readonly ApplicationUserService _userService;
+        private readonly IApplicationUserService _userService;
 
-        public SlbController(ISlbRepository slbRepo, ApplicationUserService userService)
+        public SlbController(ISlbRepository slbRepo, IApplicationUserService userService)
         {
             _slbRepo = slbRepo;
             _userService = userService;
@@ -33,6 +33,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         public async Task<ActionResult<PaginatedResult<Slb>>> GetPagedSlb(
             [FromQuery] GetAllRequestQuery request)
         {
+            //var result = await _slbRepo.GetPaginatedAsync(request, s => s.Id, s => s.SlbApplicationUser, s => s.StudentApplicationUser);
             var result = await _slbRepo.GetPaginatedAsync(request, s => s.Id);
             return Ok(result);
         }
@@ -70,6 +71,11 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// </summary>
+        /// <param name="slbId"></param>
+        /// <param name="studentId"></param>
+        /// <returns></returns>
         [HttpPut("{slbId:guid}/{studentId:guid}")]
         [EnumAuthorize(Role.SystemAdmin)]
         public async Task<IActionResult> AddStudent(Guid slbId, Guid studentId)
