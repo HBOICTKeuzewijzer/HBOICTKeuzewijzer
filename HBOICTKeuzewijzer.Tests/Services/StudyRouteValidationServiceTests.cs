@@ -223,7 +223,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
             result.Errors.Keys.Should().Contain(faultySemester.Id.ToString());
             result.Errors[faultySemester.Id.ToString()].Length.Should().Be(1);
             result.Errors[faultySemester.Id.ToString()][0].Should()
-                .Be($"Module: {faultySemester.Module!.Name} kan alleen plaatsvinden in semester {(int)SemesterConstraint.First + 1}.");
+                .Be($"Module: {faultySemester.Module!.Name} kan alleen plaatsvinden in semester {(int)SemesterConstraint.Second + 1}.");
         }
 
         [Fact]
@@ -237,7 +237,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
 
             var faultySemesterOne = TestHelpers.CreateSemester(0, new Module
             {
-                Name = "Test module",
+                Name = "Test module A",
                 PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
                 {
                     SemesterConstraint = SemesterConstraint.Second
@@ -246,7 +246,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
 
             var faultySemesterTwo = TestHelpers.CreateSemester(1, new Module
             {
-                Name = "Test module",
+                Name = "Test module B",
                 PrerequisiteJson = JsonConvert.SerializeObject(new ModulePrerequisite
                 {
                     SemesterConstraint = SemesterConstraint.First
@@ -270,10 +270,10 @@ namespace HBOICTKeuzewijzer.Tests.Services
             result.Errors.Keys.Should().Contain(faultySemesterTwo.Id.ToString());
             result.Errors[faultySemesterOne.Id.ToString()].Length.Should().Be(1);
             result.Errors[faultySemesterOne.Id.ToString()][0].Should()
-                .Be($"Module: {faultySemesterOne.Module!.Name} kan alleen plaatsvinden in semester {(int)SemesterConstraint.First + 1}.");
+                .Be($"Module: {faultySemesterOne.Module!.Name} kan alleen plaatsvinden in semester {(int)SemesterConstraint.Second + 1}.");
             result.Errors[faultySemesterTwo.Id.ToString()].Length.Should().Be(1);
             result.Errors[faultySemesterTwo.Id.ToString()][0].Should()
-                .Be($"Module: {faultySemesterTwo.Module!.Name} kan alleen plaatsvinden in semester {(int)SemesterConstraint.Second + 1}.");
+                .Be($"Module: {faultySemesterTwo.Module!.Name} kan alleen plaatsvinden in semester {(int)SemesterConstraint.First + 1}.");
         }
 
         [Fact]
@@ -918,7 +918,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
             result.Errors[faultySemesterOne.Id.ToString()].Length.Should().Be(5);
             var errorsSemesterOne = result.Errors[faultySemesterOne.Id.ToString()];
             errorsSemesterOne[0].Should().Be($"Module: {faultySemesterOne.Module!.Name} verwacht een voltooide propedeuse, minimaal 60 ec's behaald in de P fase, huidige ec's 30.");
-            errorsSemesterOne[1].Should().Be($"Module: {faultySemesterOne.Module!.Name} kan alleen plaatsvinden in semester 1.");
+            errorsSemesterOne[1].Should().Be($"Module: {faultySemesterOne.Module!.Name} kan alleen plaatsvinden in semester 2.");
             errorsSemesterOne[2].Should().Be($"Module: {faultySemesterOne.Module!.Name} verwacht dat uit voorgaande modules minimaal 60 ec zijn behaald, huidige behaalde ec's is 30.");
             errorsSemesterOne[3].Should().Be($"Module: {faultySemesterOne.Module!.Name} verwacht dat uit propedeuse minimaal 60 ec zijn behaald, huidige behaalde ec's is 30.");
 
@@ -938,7 +938,7 @@ namespace HBOICTKeuzewijzer.Tests.Services
             result.Errors[faultySemesterTwo.Id.ToString()].Length.Should().Be(4);
             var errorsSemesterTwo = result.Errors[faultySemesterTwo.Id.ToString()];
             errorsSemesterTwo[0].Should().Be($"Module: {faultySemesterTwo.Module!.Name} verwacht een voltooide propedeuse, minimaal 60 ec's behaald in de P fase, huidige ec's 30.");
-            errorsSemesterTwo[1].Should().Be($"Module: {faultySemesterTwo.Module!.Name} kan alleen plaatsvinden in semester 1.");
+            errorsSemesterTwo[1].Should().Be($"Module: {faultySemesterTwo.Module!.Name} kan alleen plaatsvinden in semester 2.");
             errorsSemesterTwo[2].Should().Be($"Module: {faultySemesterTwo.Module!.Name} verwacht dat uit propedeuse minimaal 60 ec zijn behaald, huidige behaalde ec's is 30.");
 
             var sbSemesterTwo = new StringBuilder();
