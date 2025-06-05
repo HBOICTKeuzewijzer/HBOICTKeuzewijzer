@@ -13,9 +13,9 @@ namespace HBOICTKeuzewijzer.Api.Controllers
     public class ModuleReviewController : ControllerBase
     {
         private readonly IRepository<ModuleReview> _reviewRepo;
-        private readonly ApplicationUserService _userService;
+        private readonly IApplicationUserService _userService;
 
-        public ModuleReviewController(IRepository<ModuleReview> reviewRepo, ApplicationUserService userService)
+        public ModuleReviewController(IRepository<ModuleReview> reviewRepo, IApplicationUserService userService)
         {
             _reviewRepo = reviewRepo;
             _userService = userService;

@@ -13,10 +13,10 @@ namespace HBOICTKeuzewijzer.Api.Controllers
     public class OerController : ControllerBase
     {
         private readonly IRepository<Oer> _oerRepo;
-        private readonly ApplicationUserService _userService;
-        private readonly OerUploadService _oerUploadService;
+        private readonly IApplicationUserService _userService;
+        private readonly IOerUploadService _oerUploadService;
 
-        public OerController(IRepository<Oer> oerRepo, ApplicationUserService userService, OerUploadService oerUploadService)
+        public OerController(IRepository<Oer> oerRepo, IApplicationUserService userService, IOerUploadService oerUploadService)
         {
             _oerRepo = oerRepo;
             _userService = userService;
