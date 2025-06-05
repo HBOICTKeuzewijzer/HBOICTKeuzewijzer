@@ -13,7 +13,7 @@ namespace HBOICTKeuzewijzer.Api.Services.StudyRouteValidation.Validators
             if (modulePrerequisite is null) return Task.CompletedTask;
 
             // This rule is about the propaedeutic requirement and if there is none no need to check.
-            if (!modulePrerequisite.Propaedeutic) return Task.CompletedTask;
+            if (modulePrerequisite.Propaedeutic is null) return Task.CompletedTask;
 
             // These are the semesters which are propaedeutic and so relevant to check.
             var pSemesters = previousSemesters

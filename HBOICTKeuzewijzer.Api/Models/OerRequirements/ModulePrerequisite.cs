@@ -9,7 +9,7 @@
         /// <summary>
         /// Indicates whether the student must have completed their propaedeutic phase (P) to take the module.
         /// </summary>
-        public bool Propaedeutic { get; set; }
+        public bool? Propaedeutic { get; set; }
 
         /// <summary>
         /// Optional constraint specifying in which semester the module may be taken.

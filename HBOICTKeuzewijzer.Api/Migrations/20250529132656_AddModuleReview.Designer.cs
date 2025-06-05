@@ -4,6 +4,7 @@ using HBOICTKeuzewijzer.Api.DAL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HBOICTKeuzewijzer.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250529132656_AddModuleReview")]
+    partial class AddModuleReview
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -133,28 +136,6 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                     b.ToTable("Chats");
                 });
 
-            modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.CustomModule", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<int>("ECs")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("CustomModules");
-                });
-
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Message", b =>
                 {
                     b.Property<Guid>("Id")
@@ -211,9 +192,6 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                     b.Property<int>("ECs")
                         .HasColumnType("int");
 
-                    b.Property<bool>("IsPropaedeutic")
-                        .HasColumnType("bit");
-
                     b.Property<int>("Level")
                         .HasColumnType("int");
 
@@ -245,9 +223,11 @@ namespace HBOICTKeuzewijzer.Api.Migrations
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.ModuleReview", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -301,9 +281,6 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                     b.Property<int>("AcquiredECs")
                         .HasColumnType("int");
 
-                    b.Property<Guid?>("CustomModuleId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<int>("Index")
                         .HasColumnType("int");
 
@@ -314,10 +291,6 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CustomModuleId")
-                        .IsUnique()
-                        .HasFilter("[CustomModuleId] IS NOT NULL");
 
                     b.HasIndex("ModuleId");
 
@@ -370,13 +343,13 @@ namespace HBOICTKeuzewijzer.Api.Migrations
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.ApplicationUserRole", b =>
                 {
-                    b.HasOne("HBOICTKeuzewijzer.Api.Models.ApplicationUser", "ApplicationUser")
+                    b.HasOne("HBOICTKeuzewijzer.Api.Models.ApplicationUser", "ApplicationUsers")
                         .WithMany("ApplicationUserRoles")
                         .HasForeignKey("ApplicationUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("ApplicationUser");
+                    b.Navigation("ApplicationUsers");
                 });
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Chat", b =>
@@ -384,7 +357,7 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                     b.HasOne("HBOICTKeuzewijzer.Api.Models.ApplicationUser", "SLB")
                         .WithMany()
                         .HasForeignKey("SlbApplicationUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("HBOICTKeuzewijzer.Api.Models.ApplicationUser", "Student")
@@ -455,23 +428,15 @@ namespace HBOICTKeuzewijzer.Api.Migrations
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Semester", b =>
                 {
-                    b.HasOne("HBOICTKeuzewijzer.Api.Models.CustomModule", "CustomModule")
-                        .WithOne("Semester")
-                        .HasForeignKey("HBOICTKeuzewijzer.Api.Models.Semester", "CustomModuleId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
                     b.HasOne("HBOICTKeuzewijzer.Api.Models.Module", "Module")
                         .WithMany("Semesters")
-                        .HasForeignKey("ModuleId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .HasForeignKey("ModuleId");
 
                     b.HasOne("HBOICTKeuzewijzer.Api.Models.StudyRoute", "StudyRoute")
                         .WithMany("Semesters")
                         .HasForeignKey("StudyRouteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("CustomModule");
 
                     b.Navigation("Module");
 
@@ -523,11 +488,6 @@ namespace HBOICTKeuzewijzer.Api.Migrations
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Chat", b =>
                 {
                     b.Navigation("Messages");
-                });
-
-            modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.CustomModule", b =>
-                {
-                    b.Navigation("Semester");
                 });
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Module", b =>
