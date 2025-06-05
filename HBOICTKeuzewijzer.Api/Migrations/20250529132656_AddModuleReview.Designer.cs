@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HBOICTKeuzewijzer.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250527174734_chat-related-changes")]
-    partial class chatrelatedchanges
+    [Migration("20250529132656_AddModuleReview")]
+    partial class AddModuleReview
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -221,6 +221,37 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                     b.ToTable("Modules");
                 });
 
+            modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.ModuleReview", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModuleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ReviewText")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ModuleId");
+
+                    b.HasIndex("StudentId");
+
+                    b.ToTable("ModuleReviews");
+                });
+
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Oer", b =>
                 {
                     b.Property<Guid>("Id")
@@ -376,6 +407,25 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                     b.Navigation("Oer");
                 });
 
+            modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.ModuleReview", b =>
+                {
+                    b.HasOne("HBOICTKeuzewijzer.Api.Models.Module", "Module")
+                        .WithMany("Reviews")
+                        .HasForeignKey("ModuleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HBOICTKeuzewijzer.Api.Models.ApplicationUser", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Module");
+
+                    b.Navigation("Student");
+                });
+
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Semester", b =>
                 {
                     b.HasOne("HBOICTKeuzewijzer.Api.Models.Module", "Module")
@@ -442,6 +492,8 @@ namespace HBOICTKeuzewijzer.Api.Migrations
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Module", b =>
                 {
+                    b.Navigation("Reviews");
+
                     b.Navigation("Semesters");
                 });
 

@@ -243,6 +243,35 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                     b.ToTable("Modules");
                 });
 
+            modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.ModuleReview", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModuleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ReviewText")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ModuleId");
+
+                    b.HasIndex("StudentId");
+
+                    b.ToTable("ModuleReviews");
+                });
+
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Oer", b =>
                 {
                     b.Property<Guid>("Id")
@@ -405,6 +434,25 @@ namespace HBOICTKeuzewijzer.Api.Migrations
                     b.Navigation("Oer");
                 });
 
+            modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.ModuleReview", b =>
+                {
+                    b.HasOne("HBOICTKeuzewijzer.Api.Models.Module", "Module")
+                        .WithMany("Reviews")
+                        .HasForeignKey("ModuleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HBOICTKeuzewijzer.Api.Models.ApplicationUser", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Module");
+
+                    b.Navigation("Student");
+                });
+
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Semester", b =>
                 {
                     b.HasOne("HBOICTKeuzewijzer.Api.Models.CustomModule", "CustomModule")
@@ -484,6 +532,8 @@ namespace HBOICTKeuzewijzer.Api.Migrations
 
             modelBuilder.Entity("HBOICTKeuzewijzer.Api.Models.Module", b =>
                 {
+                    b.Navigation("Reviews");
+
                     b.Navigation("Semesters");
                 });
 

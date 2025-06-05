@@ -10,12 +10,11 @@ namespace HBOICTKeuzewijzer.Api.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly ApplicationUserService _applicationUserService;
+        private readonly IApplicationUserService _applicationUserService;
 
-        public AuthController(ApplicationUserService applicationUserService)
+        public AuthController(IApplicationUserService applicationUserService)
         {
             _applicationUserService = applicationUserService;
-
         }
 
         [HttpGet("login")]
@@ -23,16 +22,31 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         {
             return Challenge(new AuthenticationProperties
             {
-                RedirectUri = $"/auth/success?returnUrl={Uri.EscapeDataString(returnUrl)}"
+                RedirectUri = $"/auth/succes?returnUrl={Uri.EscapeDataString(returnUrl)}"
             }, "Saml2");
         }
 
-        [HttpGet("success")]
+        [HttpGet("succes")]
         [Authorize]
-        public async Task<IActionResult> Success([FromQuery] string returnUrl = "/")
+        public async Task<IActionResult> Succes([FromQuery] string returnUrl = "/")
         {
             var user = await _applicationUserService.GetOrCreateUserAsync(User);
 
+            return Redirect(returnUrl);
+        }
+
+        [HttpGet("logout")]
+        public IActionResult Logout([FromQuery] string returnUrl = "/")
+        {
+            return SignOut(new AuthenticationProperties
+            {
+                RedirectUri = $"/auth/logout-succes?returnUrl={Uri.EscapeDataString(returnUrl)}"
+            });
+        }
+
+        [HttpGet("logout-succes")]
+        public IActionResult LogoutSucces([FromQuery] string returnUrl = "/")
+        {
             return Redirect(returnUrl);
         }
 
@@ -58,23 +72,5 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 
             return Ok(dto);
         }
-
-        [HttpGet("role-by-id")]
-        [Authorize]
-        public async Task<IActionResult> GetRoleById([FromQuery] Guid id)
-        {
-            var user = await _applicationUserService.GetUserWithRolesByIdAsync(id);
-
-            if (user == null)
-                return NotFound("User not found.");
-
-            var roles = user.ApplicationUserRoles?.Select(r => r.Role).ToList();
-            if (roles == null || !roles.Any())
-                return Ok(new { Id = id, Role = "None" });
-
-            return Ok(new { Id = id, Roles = roles.Select(r => r.ToString()).ToList() });
-        }
-
-
     }
 }

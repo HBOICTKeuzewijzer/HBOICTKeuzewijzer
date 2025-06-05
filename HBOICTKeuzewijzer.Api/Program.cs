@@ -63,7 +63,7 @@ namespace HBOICTKeuzewijzer.Api
                     MetadataLocation = metadataPath
                 });
             });
-
+            
             services.AddCors(options =>
             {
                 options.AddDefaultPolicy(policy =>
@@ -81,9 +81,10 @@ namespace HBOICTKeuzewijzer.Api
             services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(config.GetConnectionString("Default")));
 
-            services.AddScoped<ApplicationUserService>();
-            services.AddScoped<OerUploadService>();
+            services.AddScoped<IApplicationUserService, ApplicationUserService>();
+            services.AddScoped<IOerUploadService, OerUploadService>();
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            services.AddScoped<ISlbRepository, SlbRepository>();
             services.AddScoped<IStudyRouteRepository, StudyRouteRepository>();
             services.AddScoped<IModuleRepository, ModuleRepository>();
             services.AddScoped<StudyRouteValidationService>();
@@ -110,6 +111,38 @@ namespace HBOICTKeuzewijzer.Api
 
             app.UseCors();
 
+            app.Use(async (context, next) =>
+            {
+                // Prevents embedding your site in iframes (protects against clickjacking attacks)
+                context.Response.Headers.Append("X-Frame-Options", "DENY");
+
+                // Prevents browsers from MIME type sniffing (forces respect for Content-Type headers)
+                context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+
+                // Prevents referrer information from being sent to other sites (strong privacy setting)
+                context.Response.Headers.Append("Referrer-Policy", "no-referrer");
+
+                // Defines which sources are allowed to load content (scripts, styles, images, etc.)
+                // In this case, only allows same-origin resources (very restrictive, may break Swagger UI if used there)
+                context.Response.Headers.Append("Content-Security-Policy", "default-src 'self'");
+
+                await next();
+            });
+
+            if (!app.Environment.IsDevelopment())
+            {
+                app.UseExceptionHandler(error =>
+                {
+                    error.Run(async context =>
+                    {
+                        context.Response.StatusCode = 500;
+                        context.Response.ContentType = "application/json";
+                        await context.Response.WriteAsJsonAsync(new { error = "An unexpected error occurred." });
+                    });
+                });
+                app.UseHsts();
+            }
+            
             var forwardedHeadersOptions = new ForwardedHeadersOptions
             {
                 ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,

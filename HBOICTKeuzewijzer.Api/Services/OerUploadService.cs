@@ -2,7 +2,7 @@
 
 namespace HBOICTKeuzewijzer.Api.Services
 {
-    public class OerUploadService
+    public class OerUploadService : IOerUploadService
     {
         public async Task<string> SavePdfAsync(Oer oer, IFormFile file)
         {
