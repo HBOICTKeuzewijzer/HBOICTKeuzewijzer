@@ -190,23 +190,31 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             // Determine which module type we're dealing with
             if (updatedSemester.ModuleId is not null)
             {
-                await ApplyNormalModule(semester, updatedSemester.ModuleId.Value);
+                if (await ApplyNormalModule(semester, updatedSemester.ModuleId.Value))
+                {
+                    semester.AcquiredECs = 0;
+                    return;
+                }
             }
             else if (updatedSemester.CustomModule is not null)
             {
                 ApplyCustomModule(semester, updatedSemester.CustomModule);
             }
-
+            
+            // Only update AcquiredECs after module switching logic is handled
             semester.AcquiredECs = updatedSemester.AcquiredECs;
         }
 
-        private async Task ApplyNormalModule(Semester semester, Guid moduleId)
+        private async Task<bool> ApplyNormalModule(Semester semester, Guid moduleId)
         {
             if (semester.ModuleId != moduleId)
             {
                 semester.ModuleId = moduleId;
                 semester.Module = await _moduleRepository.GetByIdAsync(moduleId);
+                return true;
             }
+
+            return false;
         }
 
         private void ApplyCustomModule(Semester semester, CustomModule customModule)
@@ -215,7 +223,6 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             semester.CustomModuleId = customModule.Id;
             semester.ModuleId = null;
         }
-
 
         private Task<ApplicationUser?> GetUser => _applicationUserService.GetByPrincipal(User);
     }
