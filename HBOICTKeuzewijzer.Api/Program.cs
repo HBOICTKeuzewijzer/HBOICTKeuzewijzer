@@ -62,6 +62,11 @@ namespace HBOICTKeuzewijzer.Api
                     LoadMetadata = true,
                     MetadataLocation = metadataPath
                 });
+
+                options.Notifications.AuthenticationRequestCreated = (request, provider, dictionary) =>
+                {
+                    request.ForceAuthentication = true;
+                };
             });
             
             services.AddCors(options =>
