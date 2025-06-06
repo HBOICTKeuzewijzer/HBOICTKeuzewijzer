@@ -2,6 +2,7 @@
 using HBOICTKeuzewijzer.Api.Models;
 using HBOICTKeuzewijzer.Api.Repositories;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace HBOICTKeuzewijzer.Api.Controllers
 {
@@ -80,11 +81,17 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         [EnumAuthorize(Role.SystemAdmin, Role.ModuleAdmin)]
         public async Task<IActionResult> DeleteCategory(Guid id)
         {
-            var category = await _categoryRepo.GetByIdAsync(id);
+            var category = await _categoryRepo.Query().Include(c => c.Modules).FirstOrDefaultAsync(c => c.Id == id);
             if (category == null)
             {
                 return NotFound();
             }
+
+            if (category.Modules != null && category.Modules.Count > 0)
+            {
+                return Conflict("Categorie kan niet worden verwijderd want er zijn nog modules gekoppeld.");
+            }
+            
 
             await _categoryRepo.DeleteAsync(id);
             return NoContent();
