@@ -96,9 +96,36 @@ namespace HBOICTKeuzewijzer.Api.Repositories
             //filtering
             if (!string.IsNullOrEmpty(request.Filter))
             {
-                query = query.Where(e =>
-                    EF.Functions.Like(e.GetType().GetProperty("Name").GetValue(e).ToString() ?? "", $"%{request.Filter}%") ||
-                    EF.Functions.Like(e.GetType().GetProperty("Description").GetValue(e).ToString() ?? "", $"%{request.Filter}%"));
+                var parameter = Expression.Parameter(typeof(T), "e");
+
+                Expression? combined = null;
+
+                foreach (var propName in new[] { "Name", "Description" })
+                {
+                    var property = typeof(T).GetProperty(propName);
+                    if (property == null || property.PropertyType != typeof(string)) continue;
+
+                    var propertyAccess = Expression.Property(parameter, property);
+                    var nullCoalesced = Expression.Coalesce(propertyAccess, Expression.Constant(string.Empty));
+                    var likeMethod = typeof(DbFunctionsExtensions).GetMethod("Like", new[] {
+                        typeof(DbFunctions), typeof(string), typeof(string)
+                    });
+
+                    var likeCall = Expression.Call(
+                        likeMethod!,
+                        Expression.Constant(EF.Functions, typeof(DbFunctions)),
+                        nullCoalesced,
+                        Expression.Constant($"%{request.Filter}%")
+                    );
+
+                    combined = combined == null ? likeCall : Expression.OrElse(combined, likeCall);
+                }
+
+                if (combined != null)
+                {
+                    var lambda = Expression.Lambda<Func<T, bool>>(combined, parameter);
+                    query = query.Where(lambda);
+                }
             }
 
             //sortering

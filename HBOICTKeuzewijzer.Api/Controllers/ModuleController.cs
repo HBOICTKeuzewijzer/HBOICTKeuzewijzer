@@ -18,14 +18,14 @@ public class ModuleController : ControllerBase
         _moduleRepo = moduleRepo;
     }
 
-    // GET: api/Module
-    [HttpGet("paged")]
-    public async Task<ActionResult<PaginatedResult<Module>>> GetPagedModules(
-        [FromQuery] GetAllRequestQuery request)
-    {
-        var result = await _moduleRepo.GetPaginatedAsync(request, m => m.Category);
-        return Ok(result);
-    }
+        // GET: Module/paged
+        [HttpGet("paged")]
+        public async Task<ActionResult<PaginatedResult<Module>>> GetPagedModules(
+            [FromQuery] GetAllRequestQuery request)
+        {
+            var result = await _moduleRepo.GetPaginatedAsync(request, m => m.Category);
+            return Ok(result);
+        }
 
     [HttpGet]
     public async Task<ActionResult<List<Module>>> GetModules()
@@ -74,8 +74,8 @@ public class ModuleController : ControllerBase
             throw;
         }
 
-        return CreatedAtAction(nameof(GetModule), new { id = module.Id }, module);
-    }
+            return NoContent();
+        }
 
     // POST: api/Module
     [HttpPost]
