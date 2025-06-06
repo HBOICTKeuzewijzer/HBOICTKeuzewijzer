@@ -60,7 +60,7 @@ public class StudyRouteValidationService : IStudyRouteValidationService
         var validationResult = new ValidationProblemDetails
         {
             Title = "One or more validation errors occurred.",
-            Status = 400,
+            Status = 200,
             Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1"
         };
 

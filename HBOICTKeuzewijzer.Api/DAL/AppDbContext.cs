@@ -96,7 +96,7 @@ namespace HBOICTKeuzewijzer.Api.DAL
                 .HasOne(c => c.Semester)
                 .WithOne(s => s.CustomModule)
                 .HasForeignKey<Semester>(s => s.CustomModuleId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<StudyRoute>()
                 .HasOne(s => s.ApplicationUser)
