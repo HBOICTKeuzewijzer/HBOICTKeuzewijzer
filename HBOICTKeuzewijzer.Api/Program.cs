@@ -62,6 +62,11 @@ namespace HBOICTKeuzewijzer.Api
                     LoadMetadata = true,
                     MetadataLocation = metadataPath
                 });
+
+                options.Notifications.AuthenticationRequestCreated = (request, provider, dictionary) =>
+                {
+                    request.ForceAuthentication = true;
+                };
             });
             
             services.AddCors(options =>
@@ -87,7 +92,7 @@ namespace HBOICTKeuzewijzer.Api
             services.AddScoped<ISlbRepository, SlbRepository>();
             services.AddScoped<IStudyRouteRepository, StudyRouteRepository>();
             services.AddScoped<IModuleRepository, ModuleRepository>();
-            services.AddScoped<StudyRouteValidationService>();
+            services.AddScoped<IStudyRouteValidationService, StudyRouteValidationService>();
             
             services.AddAuthorization();
             services.AddSingleton<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();

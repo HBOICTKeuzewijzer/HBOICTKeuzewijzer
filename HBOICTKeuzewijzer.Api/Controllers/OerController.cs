@@ -13,13 +13,11 @@ namespace HBOICTKeuzewijzer.Api.Controllers
     public class OerController : ControllerBase
     {
         private readonly IRepository<Oer> _oerRepo;
-        private readonly IApplicationUserService _userService;
         private readonly IOerUploadService _oerUploadService;
 
         public OerController(IRepository<Oer> oerRepo, IApplicationUserService userService, IOerUploadService oerUploadService)
         {
             _oerRepo = oerRepo;
-            _userService = userService;
             _oerUploadService = oerUploadService;
         }
 
@@ -55,8 +53,6 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             {
                 return BadRequest(ModelState);
             }
-
-            var user = await _userService.GetOrCreateUserAsync(User);
 
             await _oerRepo.AddAsync(oer);
 
@@ -99,8 +95,6 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             {
                 return NotFound();
             }
-
-            var user = await _userService.GetOrCreateUserAsync(User);
 
             try
             {
