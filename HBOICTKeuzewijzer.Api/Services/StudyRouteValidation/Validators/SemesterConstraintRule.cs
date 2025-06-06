@@ -16,7 +16,7 @@ namespace HBOICTKeuzewijzer.Api.Services.StudyRouteValidation.Validators
             if (modulePrerequisite.SemesterConstraint is not null &&
                 modulePrerequisite.SemesterConstraint != currentSemesterConstraint)
             {
-                AddError($"Module: {currentSemester.Module!.Name} kan alleen plaatsvinden in semester {(int)currentSemesterConstraint + 1}.", currentSemester.Id.ToString(), errors);
+                AddError($"Module: {currentSemester.Module!.Name} kan alleen plaatsvinden in semester {(int)modulePrerequisite.SemesterConstraint + 1}.", currentSemester.Id.ToString(), errors);
             }
 
             return Task.CompletedTask;
