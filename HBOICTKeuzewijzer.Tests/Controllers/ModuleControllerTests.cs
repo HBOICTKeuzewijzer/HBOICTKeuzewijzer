@@ -19,7 +19,7 @@ namespace HBOICTKeuzewijzer.tests.Controllers
         {
             _mockRepo = new Mock<IRepository<Module>>();
             _mockUserService = new Mock<IApplicationUserService>();
-            _controller = new ModuleController(_mockRepo.Object, _mockUserService.Object);
+            _controller = new ModuleController(_mockRepo.Object);
         }
 
         [Fact]
