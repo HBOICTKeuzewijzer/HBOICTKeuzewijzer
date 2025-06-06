@@ -22,7 +22,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             _userService = userService;
         }
 
-        // GET: api/Module
+        // GET: Module/paged
         [HttpGet("paged")]
         public async Task<ActionResult<PaginatedResult<Module>>> GetPagedModules(
             [FromQuery] GetAllRequestQuery request)
@@ -92,7 +92,7 @@ namespace HBOICTKeuzewijzer.Api.Controllers
                 throw;
             }
 
-            return CreatedAtAction(nameof(GetModule), new { id = module.Id }, module);
+            return NoContent();
         }
 
         // POST: api/Module
