@@ -136,6 +136,8 @@ namespace HBOICTKeuzewijzer.Api
 
             if (!app.Environment.IsDevelopment())
             {
+                app.UseHsts();
+
                 app.UseExceptionHandler(error =>
                 {
                     error.Run(async context =>
@@ -145,7 +147,6 @@ namespace HBOICTKeuzewijzer.Api
                         await context.Response.WriteAsJsonAsync(new { error = "An unexpected error occurred." });
                     });
                 });
-                app.UseHsts();
             }
             
             var forwardedHeadersOptions = new ForwardedHeadersOptions

@@ -11,15 +11,22 @@ namespace HBOICTKeuzewijzer.Api.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IApplicationUserService _applicationUserService;
+        private readonly IConfiguration _config;
 
-        public AuthController(IApplicationUserService applicationUserService)
+        public AuthController(IApplicationUserService applicationUserService, IConfiguration config)
         {
             _applicationUserService = applicationUserService;
+            _config = config;
         }
 
         [HttpGet("login")]
         public IActionResult Login([FromQuery] string returnUrl = "")
         {
+            if (!IsReturnUrlAllowed(returnUrl))
+            {
+                return BadRequest("Invalid return URL.");
+            }
+
             return Challenge(new AuthenticationProperties
             {
                 RedirectUri = $"/auth/succes?returnUrl={Uri.EscapeDataString(returnUrl)}"
@@ -32,12 +39,22 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         {
             var user = await _applicationUserService.GetOrCreateUserAsync(User);
 
+            if (!IsReturnUrlAllowed(returnUrl))
+            {
+                return BadRequest("Invalid return URL.");
+            }
+
             return Redirect(returnUrl);
         }
 
         [HttpGet("logout")]
         public IActionResult Logout([FromQuery] string returnUrl = "/")
         {
+            if (!IsReturnUrlAllowed(returnUrl))
+            {
+                return BadRequest("Invalid return URL.");
+            }
+
             return SignOut(new AuthenticationProperties
             {
                 RedirectUri = $"/auth/logout-succes?returnUrl={Uri.EscapeDataString(returnUrl)}"
@@ -47,6 +64,11 @@ namespace HBOICTKeuzewijzer.Api.Controllers
         [HttpGet("logout-succes")]
         public IActionResult LogoutSucces([FromQuery] string returnUrl = "/")
         {
+            if (!IsReturnUrlAllowed(returnUrl))
+            {
+                return BadRequest("Invalid return URL.");
+            }
+
             return Redirect(returnUrl);
         }
 
@@ -71,6 +93,23 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             };
 
             return Ok(dto);
+        }
+
+        private bool IsReturnUrlAllowed(string returnUrl)
+        {
+            if (string.IsNullOrEmpty(returnUrl))
+                return false;
+
+            // Allow relative URLs too (safe inside app)
+            if (Uri.IsWellFormedUriString(returnUrl, UriKind.Relative))
+                return true;
+
+            if (!Uri.TryCreate(returnUrl, UriKind.Absolute, out var uri))
+                return false;
+
+            var allowedDomains = _config.GetSection("AllowedRedirectDomains").Get<string[]>();
+
+            return allowedDomains.Any(domain => uri.Host.Equals(domain, StringComparison.OrdinalIgnoreCase));
         }
     }
 }
