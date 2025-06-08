@@ -3,27 +3,32 @@ using HBOICTKeuzewijzer.Api.Models;
 using HBOICTKeuzewijzer.Api.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Moq;
 using System.Security.Claims;
-using Microsoft.Extensions.Configuration;
 
 namespace HBOICTKeuzewijzer.Tests.Controllers
 {
     public class AuthControllerTests
     {
         private readonly Mock<IApplicationUserService> _userServiceMock;
-        private readonly Mock<IConfiguration> _configMock;
         private readonly AuthController _controller;
 
         public AuthControllerTests()
         {
             _userServiceMock = new Mock<IApplicationUserService>();
-            _configMock = new Mock<IConfiguration>();
 
-            _configMock.Setup(c => c.GetSection("AllowedRedirectDomains").Get<string[]>())
-                .Returns(new string[] { "localhost" });
+            // Create real configuration with in-memory settings
+            var inMemorySettings = new Dictionary<string, string>
+            {
+                {"AllowedRedirectDomains:0", "localhost"}
+            };
 
-            _controller = new AuthController(_userServiceMock.Object, _configMock.Object);
+            IConfiguration configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(inMemorySettings)
+                .Build();
+
+            _controller = new AuthController(_userServiceMock.Object, configuration);
 
             var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
             {
@@ -44,7 +49,10 @@ namespace HBOICTKeuzewijzer.Tests.Controllers
 
             Assert.NotNull(result);
             Assert.Equal("Saml2", result.AuthenticationSchemes[0]);
-            Assert.Equal($"/auth/succes?returnUrl=https//localhost:3000", result.Properties.RedirectUri);
+
+            // RedirectUri is url-encoded inside controller
+            var expectedRedirectUri = $"/auth/succes?returnUrl={Uri.EscapeDataString(returnUrl)}";
+            Assert.Equal(expectedRedirectUri, result.Properties.RedirectUri);
         }
 
         [Fact]
@@ -68,7 +76,9 @@ namespace HBOICTKeuzewijzer.Tests.Controllers
             var result = _controller.Logout(returnUrl) as SignOutResult;
 
             Assert.NotNull(result);
-            Assert.Equal($"/auth/logout-succes?returnUrl=https//localhost:3000", result.Properties.RedirectUri);
+
+            var expectedRedirectUri = $"/auth/logout-succes?returnUrl={Uri.EscapeDataString(returnUrl)}";
+            Assert.Equal(expectedRedirectUri, result.Properties.RedirectUri);
         }
 
         [Fact]
