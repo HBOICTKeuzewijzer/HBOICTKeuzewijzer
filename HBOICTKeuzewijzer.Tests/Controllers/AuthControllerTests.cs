@@ -5,23 +5,31 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using System.Security.Claims;
+using Microsoft.Extensions.Configuration;
 
 namespace HBOICTKeuzewijzer.Tests.Controllers
 {
     public class AuthControllerTests
     {
         private readonly Mock<IApplicationUserService> _userServiceMock;
+        private readonly Mock<IConfiguration> _configMock;
         private readonly AuthController _controller;
 
         public AuthControllerTests()
         {
             _userServiceMock = new Mock<IApplicationUserService>();
-            _controller = new AuthController(_userServiceMock.Object);
+            _configMock = new Mock<IConfiguration>();
+
+            _configMock.Setup(c => c.GetSection("AllowedRedirectDomains").Get<string[]>())
+                .Returns(new string[] { "localhost" });
+
+            _controller = new AuthController(_userServiceMock.Object, _configMock.Object);
 
             var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
             {
                 new Claim(ClaimTypes.NameIdentifier, "user-id")
             }, "mock"));
+
             _controller.ControllerContext = new ControllerContext
             {
                 HttpContext = new DefaultHttpContext { User = user }
@@ -36,7 +44,7 @@ namespace HBOICTKeuzewijzer.Tests.Controllers
 
             Assert.NotNull(result);
             Assert.Equal("Saml2", result.AuthenticationSchemes[0]);
-            Assert.Equal($"/auth/succes?returnUrl=https%3A%2F%2Flocalhost%3A3000", result.Properties.RedirectUri);
+            Assert.Equal($"/auth/succes?returnUrl=https//localhost:3000", result.Properties.RedirectUri);
         }
 
         [Fact]
@@ -60,7 +68,7 @@ namespace HBOICTKeuzewijzer.Tests.Controllers
             var result = _controller.Logout(returnUrl) as SignOutResult;
 
             Assert.NotNull(result);
-            Assert.Equal($"/auth/logout-succes?returnUrl=https%3A%2F%2Flocalhost%3A3000", result.Properties.RedirectUri);
+            Assert.Equal($"/auth/logout-succes?returnUrl=https//localhost:3000", result.Properties.RedirectUri);
         }
 
         [Fact]
