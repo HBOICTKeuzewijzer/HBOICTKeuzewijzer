@@ -119,7 +119,7 @@ namespace HBOICTKeuzewijzer.Tests.Controllers
                 .ReturnsAsync((ApplicationUser)null);
 
             // Act
-            var result = await _controller.CreateWithEmail("test@example.com");
+            var result = await _controller.CreateWithEmail(new CreateChatDto{Email = "test@example.com" });
 
             // Assert
             var notFound = Assert.IsType<NotFoundObjectResult>(result.Result);
