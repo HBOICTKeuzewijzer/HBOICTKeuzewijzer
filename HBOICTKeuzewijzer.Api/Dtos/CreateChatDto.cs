@@ -7,5 +7,6 @@ namespace HBOICTKeuzewijzer.Api.Dtos
         [Required]
         [EmailAddress]
         public string Email { get; set; }
+
     }
 }
