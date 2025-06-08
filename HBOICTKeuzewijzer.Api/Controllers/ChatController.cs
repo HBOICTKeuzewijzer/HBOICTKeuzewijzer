@@ -4,6 +4,7 @@ using HBOICTKeuzewijzer.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HBOICTKeuzewijzer.Api.Dtos;
+using System.Net.Mail;
 
 
 namespace HBOICTKeuzewijzer.Api.Controllers
@@ -35,7 +36,6 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             return (user, chat);
         }
 
-        [HttpGet]
         [HttpGet]
         public async Task<ActionResult<PaginatedResult<Chat>>> List([FromQuery] GetAllRequestQuery request)
         {
@@ -173,12 +173,17 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             return NoContent();
         }
         [HttpPost("create")]
-        public async Task<ActionResult<Chat>> CreateWithEmail([FromQuery] string email)
+        public async Task<ActionResult<Chat>> CreateWithEmail([FromBody] CreateChatDto dto)
         {
-            var otherUser = await _userService.GetByEmailAsync(email);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var otherUser = await _userService.GetByEmailAsync(dto.Email);
             if (otherUser == null)
             {
-                return NotFound($"User with email '{email}' not found.");
+                return NotFound($"User with email '{dto.Email}' not found.");
             }
 
             var currentUser = await _userService.GetOrCreateUserAsync(User);
@@ -216,7 +221,6 @@ namespace HBOICTKeuzewijzer.Api.Controllers
                 studentId = otherUser.Id;
             }
 
-           
             var existingChat = await _chatRepository.Query()
                 .FirstOrDefaultAsync(c =>
                     (c.SlbApplicationUserId == currentUser.Id && c.StudentApplicationUserId == otherUser.Id) ||
@@ -226,7 +230,6 @@ namespace HBOICTKeuzewijzer.Api.Controllers
             {
                 return Ok(existingChat);
             }
-
 
             var chat = new Chat
             {
@@ -238,6 +241,8 @@ namespace HBOICTKeuzewijzer.Api.Controllers
 
             return CreatedAtAction(nameof(Read), new { id = chat.Id }, chat);
         }
+
+
 
 
 
