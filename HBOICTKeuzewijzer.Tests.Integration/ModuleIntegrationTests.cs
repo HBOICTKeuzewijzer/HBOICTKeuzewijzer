@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+﻿using Azure.Core;
+using FluentAssertions;
 using HBOICTKeuzewijzer.Api.Models;
 using HBOICTKeuzewijzer.Tests.Integration.Shared;
 using Microsoft.EntityFrameworkCore;
@@ -54,9 +55,11 @@ namespace HBOICTKeuzewijzer.Tests.Integration
 
         public class Post : ModuleIntegrationTests
         {
-
-            [Fact]
-            public async Task POST_Module_AddsModule()
+            
+            [Theory]
+            [InlineData("SystemAdmin")]
+            [InlineData("ModuleAdmin")]
+            public async Task POST_Module_AddsModule(string role)
             {
                 using var application = new TestAppFactory();
                 using var client = application.Client;
@@ -88,8 +91,12 @@ namespace HBOICTKeuzewijzer.Tests.Integration
                     Encoding.UTF8,
                     "application/json");
 
-                var response = await client.PostAsync("/Module", content);
+                var request = new HttpRequestMessage(HttpMethod.Post, "/Module") { Content = content };
+                request.Headers.Add("X-Test-Auth", "true");
+                request.Headers.Add("X-Test-Role", role);
 
+                var response = await client.SendAsync(request);
+                
                 response.StatusCode.Should().Be(HttpStatusCode.Created);
             }
         }
