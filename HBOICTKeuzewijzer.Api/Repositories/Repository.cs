@@ -93,7 +93,7 @@ namespace HBOICTKeuzewijzer.Api.Repositories
                 query = query.Include(include);
             }
 
-            // Dynamisch filter op 'Name' en 'Description' met LIKE-queries (indien aanwezig op het type)
+            //filtering
             if (!string.IsNullOrEmpty(request.Filter))
             {
                 var parameter = Expression.Parameter(typeof(T), "e");
